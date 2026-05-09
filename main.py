@@ -37,7 +37,7 @@ def run_automation():
 
         # 3. EMAIL DELIVERY SETUP
         sender_email = "vimal.dgv@gmail.com" 
-        receiver_email = "vimal.prakash@spearforgeindustries.com"
+        receiver_email = "spearforgeindustries@gmail.com"
         app_password = os.environ["GMAIL_APP_PASSWORD"]
 
         msg = MIMEMultipart()
