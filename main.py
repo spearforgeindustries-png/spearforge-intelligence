@@ -225,7 +225,7 @@ def generate_report():
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "tools": [{"google_search_retrieval": {}}],
+        "tools": [{"google_search": {}}],
         "generationConfig": {
             "temperature": 0.1,
             "maxOutputTokens": 4000
