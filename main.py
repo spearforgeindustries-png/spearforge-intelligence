@@ -40,101 +40,89 @@ def get_prompt():
 
 COMPANY BACKGROUND:
 Spearforge is an ISO 9001:2015 certified, Indian Railways Approved Vendor based in Chennai, Tamil Nadu, India.
-Products: perforated/ladder cable trays, electrical enclosures (IP55/IP65/IP66, CPRI certified),
-solar mounting structures (IS:875 Part 3, IEC 61215), die storage racks, supermarket racks,
-electrical junction boxes, cable raceways. Export markets: US, Europe, Middle East.
+Full product catalogue:
+- Perforated Cable Trays (PCT) and Ladder Type Cable Trays (LCT) — IS:2062/1079, all finishes
+- Electrical Enclosures (IP55/IP65/IP66, CPRI Certified, CRCA and SS, RAL 7035)
+- Solar Mounting Structures (IS:875 Part 3, IEC 61215, HDG MS + Aluminium 6063-T5)
+- Die Storage Racks (500kg to 10,000+kg per shelf, all-welded IS:2062 MS)
+- Supermarket Racks (Centre Gondola, Wall-Side, End Cap, Heavy-Duty, CRC/GI sheet)
+- Electrical Junction Boxes (MS/SS, IP55/IP66, custom sizes)
+- Cable Raceways (floor and ceiling, single/dual compartment)
+Export markets: US, Europe, Middle East.
 
-Today is {today}. USD/INR: {USD_TO_INR}. Show values as Rs.X,XXX Cr (original currency).
+Today is {today}. USD/INR: {USD_TO_INR}. Show values as Rs.X,XXX Cr (original currency in brackets).
 
 RULES:
-- Use Google Search. Real data from past 10 days only.
-- No fabrication. Skip items without a verified URL.
+- Use Google Search. Real verified data from the past 10 days only.
+- No fabrication. Skip any item without a verified source URL.
 - Keep each field to ONE LINE maximum.
+- For AWARDED projects, always name who won — EPC contractor or manufacturer, and their type.
+- Never miss major NTPC, SECI, Indian Railways, Metro, Data Centre, BESS project news.
 
 ==============================================================
 SECTION 1 - TOP INDIAN PROJECTS
 ==============================================================
-Find 4 major Indian projects (past 10 days). Priority: Railways, BESS, Solar, Data centres, Airports.
+Find 8 major Indian projects from the past 10 days. Cast a wide net — search for:
+- NTPC projects (coal, solar, BESS, transmission) -- especially the 1200MW and any new awards
+- BESS / Battery Energy Storage tenders and awards
+- Solar EPC project awards and tenders (SECI, NTPC, state DISCOMs)
+- Metro rail projects (all cities -- Chennai, Bangalore, Mumbai, Delhi, Hyderabad, Pune, Kochi)
+- Data centre construction announcements
+- Industrial plant / factory construction
+- Airport MEP packages
+- Retail / hypermarket / supermarket chain expansions (relevant for Supermarket Racks)
+- Automotive plant expansions or new factories (relevant for Die Storage Racks)
+- Any major EPC contract awards -- name the winner and whether EPC or manufacturer
 
 For each use EXACTLY this format:
 PROJECT: [Title]
 VALUE: [Rs.X,XXX Cr] ([original currency])
-CLIENT: [Name] | LOCATION: [City, State] | STATUS: [Tendered/Awarded/Announced]
-PRODUCTS: [Spearforge products that apply]
-OPPORTUNITY: [One line action for Spearforge]
-SOURCE: [Publication] -- [https://full-url]
+CLIENT: [Owner/Client name] | LOCATION: [City, State] | STATUS: [Tendered/Awarded/Announced]
+WINNER: [Company name -- EPC Contractor / Manufacturer / Developer] (only if Awarded, else write N/A)
+PRODUCTS: [Specific Spearforge products that apply from catalogue above]
+OPPORTUNITY: [One line -- what Spearforge should do and who to contact]
+SOURCE: [Publication name] -- [https://full-url]
 ---
 
 ==============================================================
 SECTION 2 - TOP GLOBAL PROJECTS
 ==============================================================
-Find 3 global projects (Middle East, Europe, US) from past 10 days. Priority: BESS, Solar, Data centres.
+Find 5 major global projects from past 10 days -- Middle East, Europe, or US.
+Priority: BESS, Solar EPC, Data centres, Industrial plants, Metro/Rail, Retail expansion.
+For awarded projects, name who won and their type (EPC/manufacturer).
 
 For each use EXACTLY this format:
 PROJECT: [Title]
 VALUE: [Rs.X,XXX Cr] ([original currency])
-COUNTRY: [Country] | LOCATION: [City] | STATUS: [status] | CLIENT: [Name]
-PRODUCTS: [Spearforge products that apply]
-OPPORTUNITY: [One line export angle]
-SOURCE: [Publication] -- [https://full-url]
+COUNTRY: [Country] | LOCATION: [City/Region] | STATUS: [status] | CLIENT: [Name]
+WINNER: [Company name -- EPC / Manufacturer] (if Awarded, else N/A)
+PRODUCTS: [Specific Spearforge products that apply]
+OPPORTUNITY: [One line export angle and entry strategy]
+SOURCE: [Publication name] -- [https://full-url]
 ---
 
 ==============================================================
 SECTION 3 - RAW MATERIAL PRICES (Chennai market this week)
 ==============================================================
-Search SteelMint (steelmint.com) and Steel360 (steel360.com) for current Chennai prices.
+Search for current Chennai / South India steel prices from ANY of these sources:
+SteelMint (steelmint.com), Steel360 (steel360.com), IndiaMart steel listings,
+TradeIndia steel prices, Economic Times Commodities, Business Standard commodities,
+or any Indian steel trader website. Search "MS HR sheet price Chennai 2026" and
+"GI sheet price India May 2026" and "SS 304 sheet price India 2026".
 
 For each material use EXACTLY this one-line format:
 MATERIAL: [name and spec] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [https://url]
 
-Cover: MS HR Sheet 2mm, MS HR Sheet 3mm, MS CR Sheet 1.2mm, MS CR Sheet 1.6mm,
+Cover these materials:
+MS HR Sheet 2mm, MS HR Sheet 3mm, MS CR Sheet 1.2mm, MS CR Sheet 1.6mm,
 GI Sheet 1.2mm, GI Sheet 1.6mm, SS 304 Sheet 1.2mm, SS 304 Sheet 1.6mm, Aluminium 6063-T5
 
-USD/INR IMPACT: [One line on how rate affects Spearforge costs]
-
-==============================================================
-SECTION 4 - INDIAN RAILWAYS TENDERS
-==============================================================
-Search ALL of the following platforms for ALL 5 products listed below.
-Search every product on every platform — no exceptions.
-
-PRODUCTS TO SEARCH (search each one on every platform):
-- Battery Box
-- Roof Ventilator
-- Hand Rail
-- Foot Step Assembly
-- Cable Tray
-
-PLATFORMS TO SEARCH (search all 5 products on each):
-- BidAssist: bidassist.com
-- MyTender.in: mytender.in
-- ATC Tenders: atctenders.com
-- Tenders.net: tenders.net
-- Classic Tenders: classictenders.com
-- eProcure CPPP: eprocure.gov.in
-- GEM Portal: gem.gov.in
-
-Also search Google for each product:
-"[product name] tender Indian Railways 2026"
-
-DEDUPLICATION RULE:
-If the same tender number appears from multiple platforms, include it ONLY ONCE.
-Use the platform where you found the most complete information as the source.
-
-IMPORTANT: Only include tenders that are currently OPEN (submission deadline not yet passed).
-Today is {datetime.now().strftime("%d %B %Y")}.
-
-Output a simple table. No extra text. No explanations. Just the table rows.
-Use EXACTLY this format for each unique tender found:
-
-TENDER_ROW: [Tender Number] | [Platform Name] | [DD MMM YYYY publish date] | [DD MMM YYYY submission deadline] | [Product: Battery Box/Roof Ventilator/Hand Rail/Foot Step Assembly/Cable Tray] | [URL]
-
-If no tenders found for a product, skip it silently — do not write "no tenders found".
+USD/INR IMPACT: [One line on how current rate affects Spearforge import-linked costs]
 
 ==============================================================
 STRATEGIC ACTION
 ==============================================================
-ACTION: [One critical thing Spearforge should do this week]
+ACTION: [One critical thing Spearforge should do this week based on all the above intelligence]
 """
 
 
@@ -181,7 +169,6 @@ def build_html_from_text(text):
         "SECTION 1": {"color": "#1565c0", "icon": "IN", "label": "Top Indian Projects"},
         "SECTION 2": {"color": "#2e7d32", "icon": "GL", "label": "Top Global Projects"},
         "SECTION 3": {"color": "#c9a227", "icon": "RM", "label": "Raw Material Prices -- Chennai Market"},
-        "SECTION 4": {"color": "#7b1fa2", "icon": "RW", "label": "Indian Railways Tenders -- Battery Box | Roof Ventilator | Hand Rail | Foot Step | Cable Tray (Deduplicated)"},
     }
 
     current_color   = "#c9a227"
@@ -237,41 +224,8 @@ def build_html_from_text(text):
   <hr style="border:none;border-top:1px solid #eef0f5;margin:4px 0;"></td></tr>"""
             continue
 
-        # TENDER_ROW — simple table row (Section 4)
-        if line.startswith("TENDER_ROW:"):
-            if "tender_table_open" not in html_body:
-                # Inject table header on first row
-                html_body += """<tr><td style="padding:0 0 0 0;">
-<table width="100%" cellpadding="0" cellspacing="0" id="tender_table_open">
-<tr style="background:#1a2744;">
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:20%;">Tender Number</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:15%;">Source</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:13%;">Publish Date</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:13%;">Submission Date</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:15%;">Product</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:10%;">Link</th>
-</tr>"""
-            parts      = [p.strip() for p in line.replace("TENDER_ROW:", "").split("|")]
-            tender_no  = parts[0] if len(parts) > 0 else ""
-            source     = parts[1] if len(parts) > 1 else ""
-            pub_date   = parts[2] if len(parts) > 2 else ""
-            sub_date   = parts[3] if len(parts) > 3 else ""
-            product    = parts[4].replace("Product:", "").strip() if len(parts) > 4 else ""
-            url        = parts[5] if len(parts) > 5 else "#"
-            is_battery = "Battery Box" in product
-            row_bg     = "#fff8f0" if is_battery else "#ffffff"
-            star       = "⭐ " if is_battery else ""
-            html_body += f"""<tr style="background:{row_bg};border-bottom:1px solid #eef0f5;">
-  <td style="padding:10px 14px;font-size:12px;font-weight:700;color:#1a2744;">{star}{tender_no}</td>
-  <td style="padding:10px 14px;font-size:11px;color:#555;">{source}</td>
-  <td style="padding:10px 14px;font-size:11px;color:#555;">{pub_date}</td>
-  <td style="padding:10px 14px;font-size:11px;font-weight:700;color:#c0392b;">{sub_date}</td>
-  <td style="padding:10px 14px;font-size:11px;color:#7b1fa2;font-weight:600;">{product}</td>
-  <td style="padding:10px 14px;">
-    <a href="{url}" style="font-size:11px;color:#c9a227;font-weight:700;text-decoration:none;">View →</a>
-  </td>
-</tr>"""
-            continue
+        # PROJECT
+        if line.startswith("PROJECT:"):
             content = line.split(":", 1)[1].strip()
             html_body += f"""<tr><td style="padding:14px 24px 2px;">
   <div style="font-size:15px;font-weight:700;color:#1a2744;">{content}</div></td></tr>"""
@@ -288,6 +242,16 @@ def build_html_from_text(text):
         if any(line.startswith(k) for k in ["CLIENT:", "COUNTRY:", "RAILWAY UNIT:"]):
             html_body += f"""<tr><td style="padding:2px 24px;">
   <div style="font-size:12px;color:#666;">{line}</div></td></tr>"""
+            continue
+
+        # WINNER
+        if line.startswith("WINNER:"):
+            content = line.replace("WINNER:", "").strip()
+            if content and content != "N/A":
+                html_body += f"""<tr><td style="padding:4px 24px;">
+  <div style="font-size:12px;background:#fff0f0;border-left:3px solid #c0392b;
+    padding:6px 12px;border-radius:0 4px 4px 0;">
+    <strong style="color:#c0392b;">Contract Winner:</strong> {content}</div></td></tr>"""
             continue
 
         # PRODUCTS
