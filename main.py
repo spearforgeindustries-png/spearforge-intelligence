@@ -35,7 +35,7 @@ def find_best_model():
 # STEP 2 -- PROMPT
 # ================================================================
 def get_prompt_part1():
-    """Exchange rates + Indian Projects + Global Projects"""
+    """Indian Projects + Global Projects with multi-source verification"""
     today = datetime.now().strftime("%d %B %Y")
     return f"""You are the weekly intelligence analyst for Spearforge Industrial and Engineering Solutions.
 
@@ -54,29 +54,30 @@ Export markets: US, Europe, Middle East, UK.
 Today is {today}. Show project values as Rs.X,XXX Cr (original currency in brackets).
 
 CRITICAL RULES:
-- Use Google Search actively. Search multiple queries to find projects.
-- Include real projects you find — do not return N/A or placeholder entries.
-- If you cannot find 6 Indian projects, include however many you find — even 2 or 3 is fine.
-- If a source name is not clear, write "Industry News" — do not write N/A.
+- Search EACH of the 5 trusted sources listed below for every project.
+- If a project appears in MORE than one source, it is HIGH CONFIDENCE -- mark it.
+- Include real projects only -- do not return N/A or placeholder entries.
+- If value is not public, write "Value not disclosed" -- still include the project.
 - Keep each field to ONE LINE maximum.
 - For AWARDED projects, name who won and whether EPC or manufacturer.
-- Search specifically for: NTPC awards, BESS India, Solar tenders SECI, Metro rail India,
-  Data centre India 2026, Retail expansion India, Automotive plant India.
-- If project value is not publicly available, write "Value not disclosed" -- still include the project.
-- Do NOT return N/A entries. If genuinely nothing found for a section, write one line:
-  NOTE: No major projects found this week for this category.
-- Start your response DIRECTLY with SECTION 0. Nothing before it.
+- Start your response DIRECTLY with SECTION 1. Nothing before it.
 
-==============================================================
-SECTION 0 - EXCHANGE RATES
-==============================================================
-Search Google Finance or xe.com for today's live rates.
+TRUSTED SOURCES TO SEARCH (search all 5 for every project):
+1. Mercom India (mercomindia.com) -- Solar, BESS, renewables India
+2. Economic Times Energy/Infrastructure (economictimes.indiatimes.com) -- All sectors
+3. Business Standard (business-standard.com) -- Infrastructure, energy, industry
+4. Construction World India (constructionworld.in) -- Construction, EPC awards
+5. PV Magazine India (pv-magazine-india.com) -- Solar, storage
 
-RATE: USD | [rate] | [+/-X% vs last week] | [impact on Spearforge US exports]
-RATE: AED | [rate] | [+/-X% vs last week] | [impact on Spearforge UAE exports]
-RATE: EUR | [rate] | [+/-X% vs last week] | [impact on Spearforge Europe exports]
-RATE: GBP | [rate] | [+/-X% vs last week] | [impact on Spearforge UK exports]
-RATE: SAR | [rate] | [+/-X% vs last week] | [impact on Spearforge Saudi exports]
+For global projects also search:
+6. PV Tech (pvtech.org) -- Global solar and BESS
+7. Recharge News (rechargenews.com) -- Global energy projects
+
+MULTI-SOURCE RULE:
+- After searching, for the VERIFIED_BY field list ALL sources where you found this project.
+- If found in 2+ sources, add CONFIDENCE: High
+- If found in only 1 source, add CONFIDENCE: Medium
+- If you cannot verify in any trusted source, skip the project entirely.
 
 ==============================================================
 SECTION 1 - TOP INDIAN PROJECTS
@@ -93,7 +94,7 @@ CLIENT: [Name] | LOCATION: [City, State] | STATUS: [Tendered/Awarded/Announced]
 WINNER: [Company -- EPC/Manufacturer] (if Awarded, else N/A)
 PRODUCTS: [Specific Spearforge products that apply]
 OPPORTUNITY: [One line on what Spearforge should do]
-SOURCE: [Publication name only]
+VERIFIED_BY: [Source 1, Source 2, Source 3] | CONFIDENCE: [High/Medium]
 ---
 
 ==============================================================
@@ -109,7 +110,7 @@ COUNTRY: [Country] | LOCATION: [City] | STATUS: [status] | CLIENT: [Name]
 WINNER: [Company -- EPC/Manufacturer] (if Awarded, else N/A)
 PRODUCTS: [Specific Spearforge products that apply]
 OPPORTUNITY: [One line export angle]
-SOURCE: [Publication name only]
+VERIFIED_BY: [Source 1, Source 2] | CONFIDENCE: [High/Medium]
 ---
 
 ==============================================================
@@ -120,32 +121,40 @@ ACTION: [One critical thing Spearforge should do this week]
 
 
 def get_prompt_part2():
-    """Raw material prices only"""
+    """Raw material prices -- pinned to 3 specific sources"""
     today = datetime.now().strftime("%d %B %Y")
     return f"""You are the raw material price analyst for Spearforge Industrial and Engineering Solutions,
 a sheet metal manufacturer in Chennai, India.
 
 Today is {today}.
 
-Search for current Chennai / South India steel prices from SteelMint, Steel360,
-IndiaMart, TradeIndia, Economic Times Commodities, Business Standard commodities,
-or any Indian steel trader website.
-Search: "MS HR sheet price Chennai 2026", "GI sheet price India May 2026",
-"SS 304 price India 2026", "aluminium extrusion price India 2026".
+SOURCES TO USE (in priority order -- use all 3 and cross-check):
+1. PRIMARY: SteelMint India (steelmint.com) -- India's leading steel price platform
+2. SECONDARY: Steel360 (steel360.com) -- Indian steel market prices
+3. TERTIARY: Steel India Today / IndiaMart steel listings / JSW or SAIL official price notifications
+
+Search: "MS HR sheet price Chennai {today[:4]}", "GI sheet price South India {today[:4]}",
+"SS 304 sheet price India {today[:4]}", "aluminium extrusion price Chennai {today[:4]}".
+
+For each material:
+- Get price from PRIMARY source (SteelMint) if available
+- Cross-check with SECONDARY source (Steel360) if different
+- Note which source the price came from
+- If prices differ between sources, use the average and note both
 
 YOU MUST include ALL 9 materials. Do not skip any.
-If exact Chennai price is not found, use closest South India or national market price.
+If Chennai-specific price not found, use South India or national market price.
 
 CRITICAL RULES:
 - Do NOT add any introduction or summary text.
 - Start your response DIRECTLY with SECTION 3. Nothing before it.
-- SOURCE field: website/publication name only. No URLs.
+- SOURCE field: write only the source name (SteelMint / Steel360 / IndiaMart etc.)
 
 ==============================================================
 SECTION 3 - RAW MATERIAL PRICES (Chennai market this week)
 ==============================================================
 For each material use EXACTLY this one-line format:
-MATERIAL: [name] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [name only]
+MATERIAL: [name] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [SteelMint/Steel360/IndiaMart]
 
 ALL 9 materials are mandatory:
 1. MS HR Sheet 2mm
@@ -160,6 +169,81 @@ ALL 9 materials are mandatory:
 
 USD/INR IMPACT: [One line on how current USD/INR rate affects Spearforge import costs]
 """
+
+
+# ================================================================
+# EXCHANGE RATE SOURCES (ranked by authenticity)
+# 1. Open Exchange Rates (open.er-api.com) -- free, no key, 200+ currencies
+# 2. Frankfurter API (frankfurter.dev)     -- free, no key, ECB data
+# 3. ExchangeRate-API (exchangerate-api.com) -- free tier fallback
+# ================================================================
+FX_CURRENCIES = {
+    "USD": {"name": "US Dollar",      "flag": "US", "market": "United States"},
+    "AED": {"name": "UAE Dirham",     "flag": "AE", "market": "UAE / Middle East"},
+    "EUR": {"name": "Euro",           "flag": "EU", "market": "Europe"},
+    "GBP": {"name": "British Pound",  "flag": "GB", "market": "United Kingdom"},
+    "SAR": {"name": "Saudi Riyal",    "flag": "SA", "market": "Saudi Arabia"},
+}
+
+def fetch_exchange_rates():
+    """
+    Fetch live INR rates from two independent sources and cross-verify.
+    Source 1: Open Exchange Rates (open.er-api.com) -- covers AED + SAR
+    Source 2: Frankfurter API (frankfurter.dev)     -- ECB official data
+    """
+    results = {}
+
+    # ---- Source 1: Open Exchange Rates (primary -- covers all 5 currencies) ----
+    try:
+        resp = requests.get(
+            "https://open.er-api.com/v6/latest/INR",
+            timeout=10
+        )
+        data = resp.json()
+        if data.get("result") == "success":
+            raw = data.get("rates", {})
+            for curr in FX_CURRENCIES:
+                if curr in raw and raw[curr] != 0:
+                    results[curr] = {
+                        "rate":    round(1 / raw[curr], 4),
+                        "source1": "Open Exchange Rates",
+                        "rate1":   round(1 / raw[curr], 4),
+                    }
+            print(f"  FX Source 1 (Open Exchange Rates): {len(results)} currencies fetched")
+    except Exception as e:
+        print(f"  FX Source 1 failed: {e}")
+
+    # ---- Source 2: Frankfurter (ECB) -- cross-verify USD, EUR, GBP ----
+    try:
+        resp2 = requests.get(
+            "https://api.frankfurter.dev/v2/rates?base=INR&quotes=USD,EUR,GBP",
+            timeout=10
+        )
+        data2 = resp2.json()
+        raw2  = data2.get("rates", {})
+        for curr in ["USD", "EUR", "GBP"]:
+            if curr in raw2 and raw2[curr] != 0:
+                rate2 = round(1 / raw2[curr], 4)
+                if curr in results:
+                    results[curr]["rate2"]   = rate2
+                    results[curr]["source2"] = "Frankfurter (ECB)"
+                    # Use average of both sources
+                    results[curr]["rate"]    = round(
+                        (results[curr]["rate1"] + rate2) / 2, 2
+                    )
+                    results[curr]["verified"] = True
+                else:
+                    results[curr] = {
+                        "rate":    rate2,
+                        "rate2":   rate2,
+                        "source1": "Frankfurter (ECB)",
+                        "verified": False,
+                    }
+        print(f"  FX Source 2 (Frankfurter/ECB): cross-verified USD, EUR, GBP")
+    except Exception as e:
+        print(f"  FX Source 2 failed: {e}")
+
+    return results
 
 
 # ================================================================
@@ -182,7 +266,6 @@ def call_gemini(api_key, model_id, prompt, label=""):
         raise ValueError(f"Gemini API error {resp.status_code}: {resp.text[:400]}")
     data = resp.json()
 
-    # Extract token usage from response metadata
     usage         = data.get("usageMetadata", {})
     input_tokens  = usage.get("promptTokenCount", 0)
     output_tokens = usage.get("candidatesTokenCount", 0)
@@ -194,12 +277,10 @@ def call_gemini(api_key, model_id, prompt, label=""):
     return text, input_tokens, output_tokens, total_tokens
 
 
-# Gemini 1.5 Flash free tier limits (as of May 2026)
 FREE_TIER_LIMITS = {
-    "rpm":  15,          # Requests per minute
-    "rpd":  1500,        # Requests per day
-    "tpm":  1_000_000,   # Tokens per minute
-    "tpd":  None,        # No daily token limit on free tier
+    "rpm":  15,
+    "rpd":  1500,
+    "tpm":  1_000_000,
 }
 
 
@@ -207,51 +288,46 @@ def generate_report():
     model_name = find_best_model()
     model_id   = model_name.replace("models/", "")
     api_key    = os.environ["GEMINI_API_KEY"]
-
     print(f"  Using model: {model_id}")
 
-    print("  Call 1: Exchange rates + Projects...")
-    part1, in1, out1, tot1 = call_gemini(api_key, model_id, get_prompt_part1(), "Part 1")
+    # Fetch exchange rates directly from APIs (not via Gemini)
+    print("  Fetching live exchange rates from APIs...")
+    fx_data = fetch_exchange_rates()
 
-    print("  Call 2: Raw material prices...")
-    part2, in2, out2, tot2 = call_gemini(api_key, model_id, get_prompt_part2(), "Part 2")
+    print("  Call 1: Projects (searching 5 trusted sources)...")
+    part1, in1, out1, tot1 = call_gemini(
+        api_key, model_id, get_prompt_part1(), "Projects")
 
-    # Weekly token summary
-    total_in    = in1  + in2
-    total_out   = out1 + out2
-    total_all   = tot1 + tot2
-    calls_week  = 2
-    calls_month = calls_week * 4   # ~4 Fridays/month
+    print("  Call 2: Raw material prices (SteelMint / Steel360)...")
+    part2, in2, out2, tot2 = call_gemini(
+        api_key, model_id, get_prompt_part2(), "Materials")
+
+    total_in     = in1 + in2
+    total_out    = out1 + out2
+    total_all    = tot1 + tot2
     tokens_month = total_all * 4
+    calls_month  = 8  # 2 calls x 4 Fridays
 
-    print(f"\n  TOKEN SUMMARY THIS RUN:")
-    print(f"    Input tokens  : {total_in:,}")
-    print(f"    Output tokens : {total_out:,}")
-    print(f"    Total tokens  : {total_all:,}")
-    print(f"    API calls     : {calls_week} (this run)")
-    print(f"  MONTHLY PROJECTION (4 runs):")
-    print(f"    Est. tokens/month : {tokens_month:,}")
-    print(f"    Est. calls/month  : {calls_month}")
-    print(f"    Free tier RPD     : {FREE_TIER_LIMITS['rpd']:,} (you use {calls_month})")
-    print(f"    Free tier TPM     : {FREE_TIER_LIMITS['tpm']:,}")
+    print(f"\n  TOKEN SUMMARY: {total_all:,} tokens this run | ~{tokens_month:,}/month")
 
-    # Store token stats for email footer
     generate_report.last_stats = {
-        "model":         model_id,
-        "input_tokens":  total_in,
-        "output_tokens": total_out,
-        "total_tokens":  total_all,
-        "calls":         calls_week,
+        "model":          model_id,
+        "input_tokens":   total_in,
+        "output_tokens":  total_out,
+        "total_tokens":   total_all,
+        "calls":          2,
         "monthly_tokens": tokens_month,
         "monthly_calls":  calls_month,
-        "rpd_limit":     FREE_TIER_LIMITS["rpd"],
-        "tpm_limit":     FREE_TIER_LIMITS["tpm"],
+        "rpd_limit":      FREE_TIER_LIMITS["rpd"],
+        "tpm_limit":      FREE_TIER_LIMITS["tpm"],
     }
+    generate_report.fx_data = fx_data
 
     return part1 + "\n" + part2
 
 
 generate_report.last_stats = {}
+generate_report.fx_data    = {}
 
 
 def build_token_panel(stats):
@@ -314,11 +390,64 @@ def build_token_panel(stats):
     </tr>
   </table>
 </td></tr>"""
-def build_html_from_text(text):
+def build_fx_table(fx_data):
+    """Build exchange rate table from direct API data -- consistent, reliable"""
+    if not fx_data:
+        return ""
+
+    rows = ""
+    for curr, info in FX_CURRENCIES.items():
+        if curr not in fx_data:
+            continue
+        d         = fx_data[curr]
+        rate      = d.get("rate", "N/A")
+        src1      = d.get("source1", "Open Exchange Rates")
+        src2      = d.get("source2", "")
+        verified  = d.get("verified", False)
+        rate1     = d.get("rate1", rate)
+        rate2     = d.get("rate2", "")
+        sources   = src1 + (f" + {src2}" if src2 else "")
+        verify_badge = (
+            '<span style="color:#27ae60;font-weight:700;font-size:10px;">CROSS-VERIFIED</span>'
+            if verified else
+            '<span style="color:#888;font-size:10px;">Single source</span>'
+        )
+        rate2_col = f'Rs.{rate2}' if rate2 else "—"
+        rows += f"""<tr style="border-bottom:1px solid #eef0f5;">
+  <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#1a2744;width:10%;">{info['flag']} {curr}</td>
+  <td style="padding:10px 14px;font-size:10px;color:#555;width:15%;">{info['name']}</td>
+  <td style="padding:10px 14px;font-size:16px;font-weight:800;color:#37474f;width:13%;">Rs.{rate}</td>
+  <td style="padding:10px 14px;font-size:12px;color:#555;width:12%;">Rs.{rate1}</td>
+  <td style="padding:10px 14px;font-size:12px;color:#555;width:12%;">{rate2_col}</td>
+  <td style="padding:10px 14px;width:10%;">{verify_badge}</td>
+  <td style="padding:10px 14px;font-size:11px;color:#888;">{sources}</td>
+</tr>"""
+
+    return f"""<tr><td style="padding:20px 24px 10px;background:#fafbfd;">
+  <div style="font-size:11px;font-weight:700;color:#37474f;text-transform:uppercase;
+    letter-spacing:2px;padding-bottom:10px;border-bottom:3px solid #37474f;">
+    Exchange Rates -- Live (Direct API Feed)</div>
+</td></tr>
+<tr><td style="padding:0;">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr style="background:#37474f;">
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Code</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Currency</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Rate to INR (Avg)</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Source 1</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Source 2 (ECB)</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Verified</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Data Source</th>
+</tr>
+{rows}
+</table>
+</td></tr>"""
+
+
+def build_html_from_text(text, fx_data=None):
     today = datetime.now().strftime("%d %B %Y")
 
     SECTIONS = {
-        "SECTION 0": {"color": "#37474f", "icon": "FX", "label": "Exchange Rates -- Live"},
         "SECTION 1": {"color": "#1565c0", "icon": "IN", "label": "Top Indian Projects"},
         "SECTION 2": {"color": "#2e7d32", "icon": "GL", "label": "Top Global Projects"},
         "SECTION 3": {"color": "#c9a227", "icon": "RM", "label": "Raw Material Prices -- Chennai Market"},
@@ -373,31 +502,6 @@ def build_html_from_text(text):
                 or "Spearforge Industrial" in line
                 or line.startswith("Date:") or line.startswith("USD/INR:")
                 or line.startswith("*Date") or line.startswith("*USD")):
-            continue
-
-        # RATE lines (Section 0 -- Exchange Rates)
-        if line.startswith("RATE:"):
-            parts    = [p.strip() for p in line.replace("RATE:", "").split("|")]
-            currency = parts[0] if len(parts) > 0 else ""
-            rate     = parts[1] if len(parts) > 1 else ""
-            change   = parts[2] if len(parts) > 2 else ""
-            impact   = parts[3] if len(parts) > 3 else ""
-            chg_color = ("#c0392b" if "+" in change else
-                         "#27ae60" if "-" in change else "#546e7a")
-            CURRENCY_FLAGS = {
-                "USD": "🇺🇸", "AED": "🇦🇪", "EUR": "🇪🇺",
-                "GBP": "🇬🇧", "SAR": "🇸🇦"
-            }
-            flag = CURRENCY_FLAGS.get(currency, "")
-            html_body += f"""<tr style="border-bottom:1px solid #eef0f5;">
-  <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#1a2744;width:12%;">
-    {flag} {currency}</td>
-  <td style="padding:10px 14px;font-size:15px;font-weight:800;color:#37474f;width:18%;">
-    Rs.{rate}</td>
-  <td style="padding:10px 14px;font-size:12px;font-weight:700;color:{chg_color};width:15%;">
-    {change}</td>
-  <td style="padding:10px 14px;font-size:12px;color:#555;">{impact}</td>
-</tr>"""
             continue
 
         # Strategic Action header
@@ -482,7 +586,23 @@ def build_html_from_text(text):
     <strong style="color:#c9a227;">Opportunity:</strong> {content}</div></td></tr>"""
             continue
 
-        # SOURCE / URL -- show as plain text only, no links (avoids 404 errors)
+        # VERIFIED_BY -- multi-source confidence indicator
+        if line.startswith("VERIFIED_BY:"):
+            parts      = line.replace("VERIFIED_BY:", "").split("|")
+            sources    = parts[0].strip() if parts else ""
+            confidence = parts[1].replace("CONFIDENCE:", "").strip() if len(parts) > 1 else "Medium"
+            is_high    = "High" in confidence
+            badge_clr  = "#27ae60" if is_high else "#e67e22"
+            badge_txt  = "HIGH CONFIDENCE -- Multiple Sources" if is_high else "Medium Confidence -- Single Source"
+            html_body += f"""<tr><td style="padding:4px 24px 10px;">
+  <div style="display:inline-block;background:{badge_clr}20;border:1px solid {badge_clr};
+    border-radius:3px;padding:3px 10px;">
+    <span style="color:{badge_clr};font-size:10px;font-weight:700;">{badge_txt}</span>
+    <span style="color:#666;font-size:10px;"> -- {sources}</span>
+  </div></td></tr>"""
+            continue
+
+        # SOURCE -- plain text, no link
         if line.startswith("SOURCE:") or line.startswith("URL:"):
             content = line.replace("SOURCE:", "").replace("URL:", "").strip()
             # Remove any URLs Gemini added despite instructions
@@ -540,23 +660,6 @@ def build_html_from_text(text):
             html_body += f"""<tr><td style="padding:2px 24px;">
   <div style="font-size:12px;color:#777;">{line}</div></td></tr>"""
 
-    # Exchange rate table header injection
-    fx_header = """<tr><td style="padding:0;">
-<table width="100%" cellpadding="0" cellspacing="0">
-<tr style="background:#37474f;">
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:12%;">Currency</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:20%;">Rate to INR</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:15%;">Week Change</th>
-  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Export Impact for Spearforge</th>
-</tr>"""
-    first_rate = html_body.find('<tr style="border-bottom:1px solid #eef0f5;">\n  <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#1a2744;width:12%;">')
-    if first_rate != -1:
-        html_body = html_body[:first_rate] + fx_header + html_body[first_rate:]
-        last_rate  = html_body.rfind('width:12%;">')
-        if last_rate != -1:
-            close_pos = html_body.find('</tr>', last_rate) + 5
-            html_body = html_body[:close_pos] + "</table></td></tr>" + html_body[close_pos:]
-
     # Material table header injection
     mat_header = """<tr><td style="padding:0;">
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -593,6 +696,7 @@ def build_html_from_text(text):
 </td></tr>
 
 <table width="100%" cellpadding="0" cellspacing="0">
+  {build_fx_table(fx_data or {})}
   {html_body}
 </table>
 
@@ -639,7 +743,7 @@ def run_automation():
         raw_response = generate_report()
 
         print("Step 2: Building HTML email...")
-        html_body = build_html_from_text(raw_response)
+        html_body = build_html_from_text(raw_response, generate_report.fx_data)
 
         print("Step 3: Sending email...")
         send_email(html_body, today)
