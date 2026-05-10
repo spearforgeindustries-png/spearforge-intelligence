@@ -151,7 +151,7 @@ OUTPUT: Respond with ONLY valid JSON. No markdown, no backticks, no explanation.
     {{
       "rank": 1,
       "title": "Project name",
-      "description": "2-3 sentence description",
+      "description": "1 sentence only",
       "valueInr": "Rs.X,XXX Cr",
       "location": "City, State",
       "status": "Tendered | Awarded | Announced | Under Construction",
@@ -166,7 +166,7 @@ OUTPUT: Respond with ONLY valid JSON. No markdown, no backticks, no explanation.
     {{
       "rank": 1,
       "title": "Project name",
-      "description": "2-3 sentence description",
+      "description": "description": "1 sentence only",
       "valueInr": "Rs.X,XXX Cr",
       "valueOriginal": "$X B or EUR X M or AED X B",
       "country": "Country",
@@ -228,7 +228,8 @@ def generate_report():
         "tools": [{"google_search": {}}],
         "generationConfig": {
             "temperature": 0.1,
-            "maxOutputTokens": 8192
+            "maxOutputTokens": 8192,
+"responseMimeType": "application/json"
         }
     }
 
@@ -247,27 +248,39 @@ def generate_report():
 # STEP 4 — PARSE JSON RESPONSE
 # ================================================================
 def parse_response(raw_text):
-    # Remove markdown fences
-    clean = re.sub(r'```json', '', raw_text, flags=re.IGNORECASE)
-    clean = re.sub(r'```',     '', clean)
-    clean = clean.strip()
+    # Step 1: Try to extract JSON between backtick fences
+    fence_match = re.search(r'```(?:json)?\s*(\{[\s\S]*\})\s*```', raw_text)
+    if fence_match:
+        try:
+            return json.loads(fence_match.group(1))
+        except Exception:
+            pass
 
-    # Try direct parse first
+    # Step 2: Strip backticks and try direct parse
+    clean = re.sub(r'```(?:json)?', '', raw_text).strip()
     try:
         return json.loads(clean)
-    except json.JSONDecodeError:
+    except Exception:
         pass
 
-    # Extract the largest JSON object found in the text
-    matches = re.findall(r'\{[\s\S]*\}', clean)
-    for match in sorted(matches, key=len, reverse=True):
+    # Step 3: Find JSON start and try to parse progressively
+    start = clean.find('{')
+    if start != -1:
+        fragment = clean[start:]
+        # Try the full fragment
         try:
-            return json.loads(match)
-        except json.JSONDecodeError:
-            continue
+            return json.loads(fragment)
+        except Exception:
+            pass
+        # Try adding closing braces to fix truncation
+        for closing in [']}]}]}]}', ']}]}]}', ']}]}', ']}', '}']:
+            try:
+                return json.loads(fragment + closing)
+            except Exception:
+                continue
 
-    # Last resort — Gemini didn't return JSON, build minimal structure
-    print("  WARNING: Could not parse JSON. Building fallback report.")
+    # Step 4: Fallback empty report
+    print("  WARNING: Could not parse JSON. Sending fallback report.")
     return {
         "reportDate": datetime.now().strftime("%d %B %Y"),
         "usdInrRate": USD_TO_INR,
@@ -276,7 +289,7 @@ def parse_response(raw_text):
         "rawMaterials": [],
         "railwayTenders": [],
         "usdInrImpact": "Data unavailable this week.",
-        "weeklySignal": "Gemini response could not be parsed. Raw output: " + raw_text[:300]
+        "weeklySignal": raw_text[:500]
     }
 
 
