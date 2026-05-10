@@ -73,7 +73,7 @@ YOUR TASK: Produce a structured intelligence report with FOUR sections.
 ==============================================================
 SECTION 1 - TOP INDIAN PROJECTS (past 10 days)
 ==============================================================
-Find 5-8 major Indian infrastructure, energy, or industrial projects:
+Find 4 major Indian infrastructure, energy, or industrial projects:
 - Announced, tendered, or awarded in the past 10 days
 - Directly relevant to Spearforge products above
 
@@ -87,7 +87,7 @@ and why, source name, verified source URL.
 ==============================================================
 SECTION 2 - TOP GLOBAL PROJECTS (past 10 days)
 ==============================================================
-Find 4-6 major global projects relevant to Spearforge exports:
+Find 3 major global projects relevant to Spearforge exports:
 - Middle East (UAE, Saudi Arabia, Qatar, Oman)
 - Europe or US
 
@@ -228,7 +228,7 @@ def generate_report():
         "tools": [{"google_search": {}}],
         "generationConfig": {
             "temperature": 0.1,
-            "maxOutputTokens": 4000
+            "maxOutputTokens": 8192
         }
     }
 
