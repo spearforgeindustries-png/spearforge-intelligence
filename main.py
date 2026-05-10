@@ -16,7 +16,7 @@ REPORT_SUBJECT = "Spearforge Weekly Intelligence Report"
 USD_TO_INR     = 83.5  # Update weekly
 
 # ================================================================
-# STEP 1 — GEMINI SETUP
+# STEP 1 -- GEMINI SETUP
 # ================================================================
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
@@ -32,7 +32,7 @@ def find_best_model():
 
 
 # ================================================================
-# STEP 2 — PROMPT
+# STEP 2 -- PROMPT
 # ================================================================
 def get_prompt():
     today = datetime.now().strftime("%d %B %Y")
@@ -41,29 +41,116 @@ def get_prompt():
 COMPANY BACKGROUND:
 Spearforge is an ISO 9001:2015 certified, Indian Railways Approved Vendor based in Chennai, Tamil Nadu, India.
 Full product catalogue:
-- Perforated Cable Trays (PCT) and Ladder Type Cable Trays (LCT) — IS:2062/1079, all finishes
+- Perforated Cable Trays (PCT) and Ladder Type Cable Trays (LCT) -- IS:2062/1079, all finishes
 - Electrical Enclosures (IP55/IP65/IP66, CPRI Certified, CRCA and SS, RAL 7035)
 - Solar Mounting Structures (IS:875 Part 3, IEC 61215, HDG MS + Aluminium 6063-T5)
 - Die Storage Racks (500kg to 10,000+kg per shelf, all-welded IS:2062 MS)
 - Supermarket Racks (Centre Gondola, Wall-Side, End Cap, Heavy-Duty, CRC/GI sheet)
 - Electrical Junction Boxes (MS/SS, IP55/IP66, custom sizes)
 - Cable Raceways (floor and ceiling, single/dual compartment)
-Export markets: US, Europe, Middle East.
+Export markets: US, Europe, Middle East, UK.
 
-Today is {today}. USD/INR: {USD_TO_INR}. Show values as Rs.X,XXX Cr (original currency in brackets).
+Today is {today}. Show project values as Rs.X,XXX Cr (original currency in brackets).
 
-RULES:
+CRITICAL RULES:
 - Use Google Search. Real verified data from the past 10 days only.
-- No fabrication. Skip any item without a verified source URL.
+- No fabrication. Skip any item without a real source.
 - Keep each field to ONE LINE maximum.
-- For AWARDED projects, always name who won — EPC contractor or manufacturer, and their type.
+- For AWARDED projects, always name who won and whether EPC or manufacturer.
 - Never miss major NTPC, SECI, Indian Railways, Metro, Data Centre, BESS project news.
+- Do NOT add any introduction, title, date header, or summary text before the sections.
+- Start your response DIRECTLY with SECTION 0. Nothing before it.
+- For SOURCE field: use ONLY the publication/website name. Do NOT include any URL.
+
+==============================================================
+SECTION 0 - EXCHANGE RATES
+==============================================================
+Search Google Finance or xe.com for today's live exchange rates to INR.
+
+Use EXACTLY this format for each currency (one line each):
+RATE: USD | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to US]
+RATE: AED | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to UAE]
+RATE: EUR | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to Europe]
+RATE: GBP | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to UK]
+RATE: SAR | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to Saudi Arabia]
 
 ==============================================================
 SECTION 1 - TOP INDIAN PROJECTS
 ==============================================================
-Find 8 major Indian projects from the past 10 days. Cast a wide net — search for:
-- NTPC projects (coal, solar, BESS, transmission) -- especially the 1200MW and any new awards
+Find 8 major Indian projects from the past 10 days. Search for:
+- NTPC projects (coal, solar, BESS, transmission) -- especially 1200MW and any new awards
+- BESS / Battery Energy Storage tenders and awards
+- Solar EPC project awards and tenders (SECI, NTPC, state DISCOMs)
+- Metro rail projects (all cities -- Chennai, Bangalore, Mumbai, Delhi, Hyderabad, Pune, Kochi)
+- Data centre construction announcements
+- Industrial plant / factory / warehouse construction
+- Airport MEP packages
+- Retail / hypermarket / supermarket chain expansions (relevant for Supermarket Racks)
+- Automotive / manufacturing plant expansions (relevant for Die Storage Racks)
+- Any major EPC contract awards -- name the winner
+
+For each use EXACTLY this format:
+PROJECT: [Title]
+VALUE: [Rs.X,XXX Cr] ([original currency])
+CLIENT: [Owner/Client name] | LOCATION: [City, State] | STATUS: [Tendered/Awarded/Announced]
+WINNER: [Company name -- EPC Contractor / Manufacturer / Developer] (if Awarded, else N/A)
+PRODUCTS: [Specific Spearforge products that apply]
+OPPORTUNITY: [One line on what Spearforge should do]
+SOURCE: [Publication or website name only -- no URL]
+---
+
+==============================================================
+SECTION 2 - TOP GLOBAL PROJECTS
+==============================================================
+Find 5 major global projects from past 10 days -- Middle East, Europe, or US.
+Priority: BESS, Solar EPC, Data centres, Industrial plants, Metro/Rail, Retail expansion.
+
+For each use EXACTLY this format:
+PROJECT: [Title]
+VALUE: [Rs.X,XXX Cr] ([original currency])
+COUNTRY: [Country] | LOCATION: [City/Region] | STATUS: [status] | CLIENT: [Name]
+WINNER: [Company name -- EPC / Manufacturer] (if Awarded, else N/A)
+PRODUCTS: [Specific Spearforge products that apply]
+OPPORTUNITY: [One line export angle and entry strategy]
+SOURCE: [Publication or website name only -- no URL]
+---
+
+==============================================================
+SECTION 3 - RAW MATERIAL PRICES (Chennai market this week)
+==============================================================
+Search for current Chennai / South India steel prices from SteelMint, Steel360,
+IndiaMart, TradeIndia, Economic Times Commodities, or any Indian steel trader website.
+Search: "MS HR sheet price Chennai 2026", "GI sheet price India May 2026", "SS 304 price India 2026".
+
+YOU MUST include ALL 9 materials below. Do not skip any material.
+If exact Chennai price not found, use closest South India or national price available.
+
+For each material use EXACTLY this one-line format:
+MATERIAL: [name] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [website name only]
+
+Materials to cover (ALL 9 are mandatory):
+1. MS HR Sheet 2mm
+2. MS HR Sheet 3mm
+3. MS CR Sheet 1.2mm
+4. MS CR Sheet 1.6mm
+5. GI Sheet 1.2mm
+6. GI Sheet 1.6mm
+7. SS 304 Sheet 1.2mm
+8. SS 304 Sheet 1.6mm
+9. Aluminium 6063-T5 Extrusion
+
+USD/INR IMPACT: [One line on how current rate affects Spearforge import-linked costs]
+
+==============================================================
+STRATEGIC ACTION
+==============================================================
+ACTION: [One critical thing Spearforge should do this week based on all the above intelligence]
+
+==============================================================
+SECTION 1 - TOP INDIAN PROJECTS
+==============================================================
+Find 8 major Indian projects from the past 10 days. Cast a wide net -- search for:
+- NTPC projects (coal, solar, BESS, transmission) -- especially the 1200 MW and any new awards
 - BESS / Battery Energy Storage tenders and awards
 - Solar EPC project awards and tenders (SECI, NTPC, state DISCOMs)
 - Metro rail projects (all cities -- Chennai, Bangalore, Mumbai, Delhi, Hyderabad, Pune, Kochi)
@@ -127,7 +214,7 @@ ACTION: [One critical thing Spearforge should do this week based on all the abov
 
 
 # ================================================================
-# STEP 3 — CALL GEMINI WITH GOOGLE SEARCH GROUNDING
+# STEP 3 -- CALL GEMINI WITH GOOGLE SEARCH GROUNDING
 # ================================================================
 def generate_report():
     model_name = find_best_model()
@@ -160,12 +247,13 @@ def generate_report():
 
 
 # ================================================================
-# STEP 4 — BUILD HTML EMAIL FROM PLAIN TEXT
+# STEP 4 -- BUILD HTML EMAIL FROM PLAIN TEXT
 # ================================================================
 def build_html_from_text(text):
     today = datetime.now().strftime("%d %B %Y")
 
     SECTIONS = {
+        "SECTION 0": {"color": "#37474f", "icon": "FX", "label": "Exchange Rates -- Live"},
         "SECTION 1": {"color": "#1565c0", "icon": "IN", "label": "Top Indian Projects"},
         "SECTION 2": {"color": "#2e7d32", "icon": "GL", "label": "Top Global Projects"},
         "SECTION 3": {"color": "#c9a227", "icon": "RM", "label": "Raw Material Prices -- Chennai Market"},
@@ -199,6 +287,39 @@ def build_html_from_text(text):
                 matched = True
                 break
         if matched:
+            continue
+
+        # Skip junk intro lines Gemini sometimes adds
+        if (line.startswith("**") or line.startswith("##")
+                or "Weekly Intelligence Report" in line
+                or "Spearforge Industrial" in line
+                or line.startswith("Date:") or line.startswith("USD/INR:")
+                or line.startswith("*Date") or line.startswith("*USD")):
+            continue
+
+        # RATE lines (Section 0 -- Exchange Rates)
+        if line.startswith("RATE:"):
+            parts    = [p.strip() for p in line.replace("RATE:", "").split("|")]
+            currency = parts[0] if len(parts) > 0 else ""
+            rate     = parts[1] if len(parts) > 1 else ""
+            change   = parts[2] if len(parts) > 2 else ""
+            impact   = parts[3] if len(parts) > 3 else ""
+            chg_color = ("#c0392b" if "+" in change else
+                         "#27ae60" if "-" in change else "#546e7a")
+            CURRENCY_FLAGS = {
+                "USD": "🇺🇸", "AED": "🇦🇪", "EUR": "🇪🇺",
+                "GBP": "🇬🇧", "SAR": "🇸🇦"
+            }
+            flag = CURRENCY_FLAGS.get(currency, "")
+            html_body += f"""<tr style="border-bottom:1px solid #eef0f5;">
+  <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#1a2744;width:12%;">
+    {flag} {currency}</td>
+  <td style="padding:10px 14px;font-size:15px;font-weight:800;color:#37474f;width:18%;">
+    Rs.{rate}</td>
+  <td style="padding:10px 14px;font-size:12px;font-weight:700;color:{chg_color};width:15%;">
+    {change}</td>
+  <td style="padding:10px 14px;font-size:12px;color:#555;">{impact}</td>
+</tr>"""
             continue
 
         # Strategic Action header
@@ -272,28 +393,23 @@ def build_html_from_text(text):
     <strong style="color:#c9a227;">Opportunity:</strong> {content}</div></td></tr>"""
             continue
 
-        # SOURCE / URL
+        # SOURCE / URL -- show as plain text only, no links (avoids 404 errors)
         if line.startswith("SOURCE:") or line.startswith("URL:"):
-            url_match  = re.search(r'https?://\S+', line)
-            label_part = re.sub(r'https?://\S+', '', line)
-            label_part = re.sub(r'^(SOURCE:|URL:)', '', label_part).replace("--", "").strip()
-            if url_match:
-                link = url_match.group().rstrip(")")
+            content = line.replace("SOURCE:", "").replace("URL:", "").strip()
+            # Remove any URLs Gemini added despite instructions
+            content = re.sub(r'https?://\S+', '', content).replace("--", "").strip()
+            if content:
                 html_body += f"""<tr><td style="padding:2px 24px 10px;">
-  <a href="{link}" style="font-size:11px;color:{current_color};
-    font-weight:700;text-decoration:none;">Source: {label_part if label_part else link[:50]}</a></td></tr>"""
-            else:
-                html_body += f"""<tr><td style="padding:2px 24px 10px;">
-  <div style="font-size:11px;color:#888;">{line}</div></td></tr>"""
+  <div style="font-size:11px;color:#888;">&#128240; Source: {content}</div></td></tr>"""
             continue
 
         # MATERIAL rows (Section 3)
         if line.startswith("MATERIAL:"):
             parts    = [p.strip() for p in line.split("|")]
             mat_name = parts[0].replace("MATERIAL:", "").strip()
-            tonne    = next((p.replace("TONNE:", "").strip() for p in parts if "TONNE:" in p), "—")
-            kg       = next((p.replace("KG:", "").strip() for p in parts if "KG:" in p), "—")
-            change   = next((p.replace("CHANGE:", "").strip() for p in parts if "CHANGE:" in p), "—")
+            tonne    = next((p.replace("TONNE:", "").strip() for p in parts if "TONNE:" in p), "--")
+            kg       = next((p.replace("KG:", "").strip() for p in parts if "KG:" in p), "--")
+            change   = next((p.replace("CHANGE:", "").strip() for p in parts if "CHANGE:" in p), "--")
             src_raw  = next((p.replace("SOURCE:", "").strip() for p in parts if "SOURCE:" in p), "#")
             clr      = "#c0392b" if "Rising" in change else ("#27ae60" if "Falling" in change else "#546e7a")
             html_body += f"""<tr>
@@ -335,7 +451,24 @@ def build_html_from_text(text):
             html_body += f"""<tr><td style="padding:2px 24px;">
   <div style="font-size:12px;color:#777;">{line}</div></td></tr>"""
 
-    # Material table header
+    # Exchange rate table header injection
+    fx_header = """<tr><td style="padding:0;">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr style="background:#37474f;">
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:12%;">Currency</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:20%;">Rate to INR</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:15%;">Week Change</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Export Impact for Spearforge</th>
+</tr>"""
+    first_rate = html_body.find('<tr style="border-bottom:1px solid #eef0f5;">\n  <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#1a2744;width:12%;">')
+    if first_rate != -1:
+        html_body = html_body[:first_rate] + fx_header + html_body[first_rate:]
+        last_rate  = html_body.rfind('width:12%;">')
+        if last_rate != -1:
+            close_pos = html_body.find('</tr>', last_rate) + 5
+            html_body = html_body[:close_pos] + "</table></td></tr>" + html_body[close_pos:]
+
+    # Material table header injection
     mat_header = """<tr><td style="padding:0;">
 <table width="100%" cellpadding="0" cellspacing="0">
 <tr style="background:#1a2744;">
@@ -345,7 +478,6 @@ def build_html_from_text(text):
   <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Week Change</th>
   <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Source</th>
 </tr>"""
-
     first_mat = html_body.find('<tr>\n  <td style="padding:8px 14px;border-bottom')
     if first_mat != -1:
         html_body = html_body[:first_mat] + mat_header + html_body[first_mat:]
@@ -368,8 +500,7 @@ def build_html_from_text(text):
   <div style="color:#c9a227;font-size:10px;font-weight:700;letter-spacing:3px;
     text-transform:uppercase;margin-bottom:8px;">Spearforge Industrial &amp; Engineering Solutions</div>
   <div style="color:#fff;font-size:24px;font-weight:800;margin-bottom:6px;">Weekly Intelligence Report</div>
-  <div style="color:#8a9dc0;font-size:13px;">{today} &nbsp;&middot;&nbsp;
-    USD/INR: <strong style="color:#c9a227;">Rs.{USD_TO_INR}</strong></div>
+  <div style="color:#8a9dc0;font-size:13px;">{today} &nbsp;&middot;&nbsp; Auto-generated every Friday 7:00 AM IST</div>
 </td></tr>
 
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -389,7 +520,7 @@ def build_html_from_text(text):
 
 
 # ================================================================
-# STEP 5 — SEND EMAIL
+# STEP 5 -- SEND EMAIL
 # ================================================================
 def send_email(html_body, today):
     app_password   = os.environ["GMAIL_APP_PASSWORD"]
