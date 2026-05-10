@@ -221,6 +221,20 @@ def build_html_from_text(text):
         if not line:
             continue
 
+        # ---- PRE-PROCESSING: Normalize Gemini output variations ----
+        # Strip leading numbers like "1. " "12. " that Gemini adds to lists
+        line = re.sub(r'^\d+\.\s+', '', line)
+        # Strip bold markdown ** from both ends but keep content
+        line = re.sub(r'^\*\*(.+)\*\*$', r'\1', line)
+        line = re.sub(r'^\*\*', '', line)
+        # If line contains "| TONNE:" it's a material row — add prefix if missing
+        if "| TONNE:" in line and not line.startswith("MATERIAL:"):
+            line = "MATERIAL: " + line
+        # If line contains "| LOCATION:" or "| STATUS:" it's a project CLIENT line
+        if ("| LOCATION:" in line or "| STATUS:" in line) and not any(
+                line.startswith(k) for k in ["CLIENT:", "COUNTRY:", "RAILWAY UNIT:"]):
+            line = "CLIENT: " + line
+
         # Skip separator lines
         if re.match(r'^[=\-]{4,}$', line):
             continue
@@ -242,8 +256,7 @@ def build_html_from_text(text):
             continue
 
         # Skip junk intro lines Gemini sometimes adds
-        if (line.startswith("**") or line.startswith("##")
-                or "Weekly Intelligence Report" in line
+        if ("Weekly Intelligence Report" in line
                 or "Spearforge Industrial" in line
                 or line.startswith("Date:") or line.startswith("USD/INR:")
                 or line.startswith("*Date") or line.startswith("*USD")):
@@ -297,9 +310,9 @@ def build_html_from_text(text):
   <hr style="border:none;border-top:1px solid #eef0f5;margin:4px 0;"></td></tr>"""
             continue
 
-        # PROJECT
-        if line.startswith("PROJECT:"):
-            content = line.split(":", 1)[1].strip()
+        # PROJECT — also catches "Project Name:" or bare project titles in Section 1/2
+        if line.startswith("PROJECT:") or line.startswith("Project Name:"):
+            content = re.split(r':\s*', line, 1)[1].strip() if ':' in line else line
             html_body += f"""<tr><td style="padding:14px 24px 2px;">
   <div style="font-size:15px;font-weight:700;color:#1a2744;">{content}</div></td></tr>"""
             continue
