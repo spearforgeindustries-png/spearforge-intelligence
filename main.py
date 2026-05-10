@@ -247,20 +247,37 @@ def generate_report():
 # STEP 4 — PARSE JSON RESPONSE
 # ================================================================
 def parse_response(raw_text):
-    # Strip any accidental markdown fences
-    clean = re.sub(r'^```json\s*', '', raw_text.strip(), flags=re.IGNORECASE)
-    clean = re.sub(r'^```\s*',     '', clean,            flags=re.IGNORECASE)
-    clean = re.sub(r'```\s*$',     '', clean)
+    # Remove markdown fences
+    clean = re.sub(r'```json', '', raw_text, flags=re.IGNORECASE)
+    clean = re.sub(r'```',     '', clean)
     clean = clean.strip()
 
+    # Try direct parse first
     try:
         return json.loads(clean)
     except json.JSONDecodeError:
-        # Try extracting just the JSON object if there's surrounding text
-        match = re.search(r'\{[\s\S]*\}', clean)
-        if match:
-            return json.loads(match.group())
-        raise ValueError("Could not parse JSON from Gemini response. Raw output:\n" + raw_text[:500])
+        pass
+
+    # Extract the largest JSON object found in the text
+    matches = re.findall(r'\{[\s\S]*\}', clean)
+    for match in sorted(matches, key=len, reverse=True):
+        try:
+            return json.loads(match)
+        except json.JSONDecodeError:
+            continue
+
+    # Last resort — Gemini didn't return JSON, build minimal structure
+    print("  WARNING: Could not parse JSON. Building fallback report.")
+    return {
+        "reportDate": datetime.now().strftime("%d %B %Y"),
+        "usdInrRate": USD_TO_INR,
+        "indianProjects": [],
+        "globalProjects": [],
+        "rawMaterials": [],
+        "railwayTenders": [],
+        "usdInrImpact": "Data unavailable this week.",
+        "weeklySignal": "Gemini response could not be parsed. Raw output: " + raw_text[:300]
+    }
 
 
 # ================================================================
