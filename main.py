@@ -82,12 +82,7 @@ SOURCE: [Publication] -- [https://full-url]
 ==============================================================
 SECTION 3 - RAW MATERIAL PRICES (Chennai market this week)
 ==============================================================
-Search for current Chennai / South India steel prices from ANY of these sources:
-SteelMint (steelmint.com), Steel360 (steel360.com), IndiaMart steel price listings,
-TradeIndia steel prices, Economic Times Commodities, Business Standard commodities,
-or any Indian steel trader website showing current 2026 prices.
-Search "MS HR sheet price Chennai 2026" and "GI sheet price India May 2026"
-and "SS 304 sheet price India 2026". Accept any credible source with actual INR prices.
+Search SteelMint (steelmint.com) and Steel360 (steel360.com) for current Chennai prices.
 
 For each material use EXACTLY this one-line format:
 MATERIAL: [name and spec] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [https://url]
@@ -98,22 +93,43 @@ GI Sheet 1.2mm, GI Sheet 1.6mm, SS 304 Sheet 1.2mm, SS 304 Sheet 1.6mm, Aluminiu
 USD/INR IMPACT: [One line on how rate affects Spearforge costs]
 
 ==============================================================
-SECTION 4 - INDIAN RAILWAYS TENDERS (IREPS)
+SECTION 4 - INDIAN RAILWAYS TENDERS
 ==============================================================
-Search ireps.gov.in for open tenders (past 14 days) for:
-cable trays, electrical enclosures, junction boxes, battery boxes, underslung water tanks,
-berth frames, coat hooks, sheet metal fabrication, solar mounting for stations.
+Search ALL of the following platforms for ALL 5 products listed below.
+Search every product on every platform — no exceptions.
 
-Spearforge is approved vendor for: MS/SS battery boxes, coat hooks, underslung water tanks, berth frames.
+PRODUCTS TO SEARCH (search each one on every platform):
+- Battery Box
+- Roof Ventilator
+- Hand Rail
+- Foot Step Assembly
+- Cable Tray
 
-For each use EXACTLY this format:
-TENDER: [IREPS Tender Number]
-DESCRIPTION: [Brief description]
-RAILWAY UNIT: [Zone/Division] | VALUE: [Rs.X Lakhs] | DEADLINE: [DD MMM YYYY]
-PRODUCT MATCH: [Spearforge product]
-APPROVED VENDOR: [Yes/No]
-URL: [https://ireps.gov.in/...]
----
+PLATFORMS TO SEARCH (search all 5 products on each):
+- BidAssist: bidassist.com
+- MyTender.in: mytender.in
+- ATC Tenders: atctenders.com
+- Tenders.net: tenders.net
+- Classic Tenders: classictenders.com
+- eProcure CPPP: eprocure.gov.in
+- GEM Portal: gem.gov.in
+
+Also search Google for each product:
+"[product name] tender Indian Railways 2026"
+
+DEDUPLICATION RULE:
+If the same tender number appears from multiple platforms, include it ONLY ONCE.
+Use the platform where you found the most complete information as the source.
+
+IMPORTANT: Only include tenders that are currently OPEN (submission deadline not yet passed).
+Today is {datetime.now().strftime("%d %B %Y")}.
+
+Output a simple table. No extra text. No explanations. Just the table rows.
+Use EXACTLY this format for each unique tender found:
+
+TENDER_ROW: [Tender Number] | [Platform Name] | [DD MMM YYYY publish date] | [DD MMM YYYY submission deadline] | [Product: Battery Box/Roof Ventilator/Hand Rail/Foot Step Assembly/Cable Tray] | [URL]
+
+If no tenders found for a product, skip it silently — do not write "no tenders found".
 
 ==============================================================
 STRATEGIC ACTION
@@ -165,7 +181,7 @@ def build_html_from_text(text):
         "SECTION 1": {"color": "#1565c0", "icon": "IN", "label": "Top Indian Projects"},
         "SECTION 2": {"color": "#2e7d32", "icon": "GL", "label": "Top Global Projects"},
         "SECTION 3": {"color": "#c9a227", "icon": "RM", "label": "Raw Material Prices -- Chennai Market"},
-        "SECTION 4": {"color": "#7b1fa2", "icon": "RW", "label": "Indian Railways Tenders -- IREPS"},
+        "SECTION 4": {"color": "#7b1fa2", "icon": "RW", "label": "Indian Railways Tenders -- Battery Box | Roof Ventilator | Hand Rail | Foot Step | Cable Tray (Deduplicated)"},
     }
 
     current_color   = "#c9a227"
@@ -221,8 +237,41 @@ def build_html_from_text(text):
   <hr style="border:none;border-top:1px solid #eef0f5;margin:4px 0;"></td></tr>"""
             continue
 
-        # PROJECT / TENDER
-        if line.startswith("PROJECT:") or line.startswith("TENDER:"):
+        # TENDER_ROW — simple table row (Section 4)
+        if line.startswith("TENDER_ROW:"):
+            if "tender_table_open" not in html_body:
+                # Inject table header on first row
+                html_body += """<tr><td style="padding:0 0 0 0;">
+<table width="100%" cellpadding="0" cellspacing="0" id="tender_table_open">
+<tr style="background:#1a2744;">
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:20%;">Tender Number</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:15%;">Source</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:13%;">Publish Date</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:13%;">Submission Date</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:15%;">Product</th>
+  <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;width:10%;">Link</th>
+</tr>"""
+            parts      = [p.strip() for p in line.replace("TENDER_ROW:", "").split("|")]
+            tender_no  = parts[0] if len(parts) > 0 else ""
+            source     = parts[1] if len(parts) > 1 else ""
+            pub_date   = parts[2] if len(parts) > 2 else ""
+            sub_date   = parts[3] if len(parts) > 3 else ""
+            product    = parts[4].replace("Product:", "").strip() if len(parts) > 4 else ""
+            url        = parts[5] if len(parts) > 5 else "#"
+            is_battery = "Battery Box" in product
+            row_bg     = "#fff8f0" if is_battery else "#ffffff"
+            star       = "⭐ " if is_battery else ""
+            html_body += f"""<tr style="background:{row_bg};border-bottom:1px solid #eef0f5;">
+  <td style="padding:10px 14px;font-size:12px;font-weight:700;color:#1a2744;">{star}{tender_no}</td>
+  <td style="padding:10px 14px;font-size:11px;color:#555;">{source}</td>
+  <td style="padding:10px 14px;font-size:11px;color:#555;">{pub_date}</td>
+  <td style="padding:10px 14px;font-size:11px;font-weight:700;color:#c0392b;">{sub_date}</td>
+  <td style="padding:10px 14px;font-size:11px;color:#7b1fa2;font-weight:600;">{product}</td>
+  <td style="padding:10px 14px;">
+    <a href="{url}" style="font-size:11px;color:#c9a227;font-weight:700;text-decoration:none;">View →</a>
+  </td>
+</tr>"""
+            continue
             content = line.split(":", 1)[1].strip()
             html_body += f"""<tr><td style="padding:14px 24px 2px;">
   <div style="font-size:15px;font-weight:700;color:#1a2744;">{content}</div></td></tr>"""
