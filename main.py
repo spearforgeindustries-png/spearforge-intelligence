@@ -6,8 +6,8 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-import google.generativeai as genai
-from google.generativeai import types as genai_types
+from google import genai
+from google.genai import types as genai_types
 
 # ================================================================
 # CONFIGURATION
@@ -18,20 +18,10 @@ REPORT_SUBJECT  = "Spearforge Weekly Intelligence Report"
 USD_TO_INR      = 83.5   # Update weekly or fetch dynamically
 
 # ================================================================
-# STEP 1 — GEMINI SETUP WITH GOOGLE SEARCH GROUNDING
+# STEP 1 — GEMINI CLIENT SETUP (google-genai package)
 # ================================================================
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-def get_model():
-    """Find best available Gemini flash model."""
-    try:
-        for m in genai.list_models():
-            if "1.5-flash" in m.name and "generateContent" in m.supported_generation_methods:
-                print(f"  Using model: {m.name}")
-                return m.name
-    except Exception:
-        pass
-    return "models/gemini-1.5-flash-latest"
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+GEMINI_MODEL = "gemini-1.5-flash"
 
 # ================================================================
 # STEP 2 — PROMPT (full Spearforge catalogue context)
@@ -212,25 +202,15 @@ OUTPUT: Respond with ONLY valid JSON. No markdown, no backticks, no explanation.
 # STEP 3 — CALL GEMINI WITH GOOGLE SEARCH GROUNDING
 # ================================================================
 def generate_report():
-    model_name = get_model()
-
-    # Enable Google Search grounding — this is what gets real live data
-    search_tool = genai_types.Tool(
-        google_search_retrieval=genai_types.GoogleSearchRetrieval()
-    )
-
-    model = genai.GenerativeModel(
-        model_name=model_name,
-        tools=[search_tool]
-    )
-
     prompt = get_prompt()
     print("  Calling Gemini with Google Search grounding...")
 
-    response = model.generate_content(
-        prompt,
-        generation_config=genai_types.GenerationConfig(
-            temperature=0.1,       # Low temp = factual, not creative
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(
+            tools=[genai_types.Tool(google_search=genai_types.GoogleSearch())],
+            temperature=0.1,
             max_output_tokens=4000,
         )
     )
