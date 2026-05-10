@@ -228,8 +228,7 @@ def generate_report():
         "tools": [{"google_search": {}}],
         "generationConfig": {
             "temperature": 0.1,
-            "maxOutputTokens": 8192,
-"responseMimeType": "application/json"
+            "maxOutputTokens": 8192
         }
     }
 
