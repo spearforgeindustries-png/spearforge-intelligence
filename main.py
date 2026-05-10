@@ -21,7 +21,7 @@ USD_TO_INR      = 83.5   # Update weekly or fetch dynamically
 # STEP 1 — GEMINI CLIENT SETUP (google-genai package)
 # ================================================================
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL ="gemini-1.5-flash-001"
 
 # ================================================================
 # STEP 2 — PROMPT (full Spearforge catalogue context)
