@@ -6,8 +6,8 @@ from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from google import genai
-from google.genai import types as genai_types
+import requests
+import google.generativeai as genai
 
 # ================================================================
 # CONFIGURATION
@@ -18,10 +18,20 @@ REPORT_SUBJECT  = "Spearforge Weekly Intelligence Report"
 USD_TO_INR      = 83.5   # Update weekly or fetch dynamically
 
 # ================================================================
-# STEP 1 — GEMINI CLIENT SETUP (google-genai package)
+# STEP 1 — GEMINI SETUP
 # ================================================================
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-GEMINI_MODEL ="gemini-1.5-flash-001"
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
+def find_best_model():
+    """Dynamically finds the best available flash model to avoid 404 errors."""
+    try:
+        for m in genai.list_models():
+            if "flash" in m.name.lower() and "generateContent" in m.supported_generation_methods:
+                print(f"  Found model: {m.name}")
+                return m.name
+    except Exception as e:
+        print(f"  Could not list models: {e}")
+    return "models/gemini-1.5-flash"
 
 # ================================================================
 # STEP 2 — PROMPT (full Spearforge catalogue context)
@@ -199,23 +209,36 @@ OUTPUT: Respond with ONLY valid JSON. No markdown, no backticks, no explanation.
 
 
 # ================================================================
-# STEP 3 — CALL GEMINI WITH GOOGLE SEARCH GROUNDING
+# STEP 3 — CALL GEMINI WITH GOOGLE SEARCH GROUNDING (direct HTTP)
+# Using HTTP directly avoids all SDK version compatibility issues
 # ================================================================
 def generate_report():
+    model_name = find_best_model()
+    # Strip "models/" prefix for REST API URL
+    model_id = model_name.replace("models/", "")
+    api_key  = os.environ["GEMINI_API_KEY"]
+    url      = (f"https://generativelanguage.googleapis.com/v1beta"
+                f"/models/{model_id}:generateContent?key={api_key}")
+
     prompt = get_prompt()
-    print("  Calling Gemini with Google Search grounding...")
+    print(f"  Calling Gemini REST API with Google Search grounding ({model_id})...")
 
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            tools=[genai_types.Tool(google_search=genai_types.GoogleSearch())],
-            temperature=0.1,
-            max_output_tokens=4000,
-        )
-    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "tools": [{"google_search_retrieval": {}}],
+        "generationConfig": {
+            "temperature": 0.1,
+            "maxOutputTokens": 4000
+        }
+    }
 
-    raw_text = response.text
+    resp = requests.post(url, json=payload, timeout=120)
+
+    if resp.status_code != 200:
+        raise ValueError(f"Gemini API error {resp.status_code}: {resp.text[:300]}")
+
+    data     = resp.json()
+    raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
     print(f"  Gemini responded ({len(raw_text)} chars)")
     return raw_text
 
