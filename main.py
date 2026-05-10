@@ -34,7 +34,8 @@ def find_best_model():
 # ================================================================
 # STEP 2 -- PROMPT
 # ================================================================
-def get_prompt():
+def get_prompt_part1():
+    """Exchange rates + Indian Projects + Global Projects"""
     today = datetime.now().strftime("%d %B %Y")
     return f"""You are the weekly intelligence analyst for Spearforge Industrial and Engineering Solutions.
 
@@ -58,77 +59,91 @@ CRITICAL RULES:
 - Keep each field to ONE LINE maximum.
 - For AWARDED projects, always name who won and whether EPC or manufacturer.
 - Never miss major NTPC, SECI, Indian Railways, Metro, Data Centre, BESS project news.
-- Do NOT add any introduction, title, date header, or summary text before the sections.
+- Do NOT add any introduction, title, date header, or summary text.
 - Start your response DIRECTLY with SECTION 0. Nothing before it.
-- For SOURCE field: use ONLY the publication/website name. Do NOT include any URL.
+- For SOURCE: use publication/website name only. No URLs.
 
 ==============================================================
 SECTION 0 - EXCHANGE RATES
 ==============================================================
-Search Google Finance or xe.com for today's live exchange rates to INR.
+Search Google Finance or xe.com for today's live rates.
 
-Use EXACTLY this format for each currency (one line each):
-RATE: USD | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to US]
-RATE: AED | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to UAE]
-RATE: EUR | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to Europe]
-RATE: GBP | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to UK]
-RATE: SAR | [rate] | [+/-X% vs last week] | [brief impact on Spearforge exports to Saudi Arabia]
+RATE: USD | [rate] | [+/-X% vs last week] | [impact on Spearforge US exports]
+RATE: AED | [rate] | [+/-X% vs last week] | [impact on Spearforge UAE exports]
+RATE: EUR | [rate] | [+/-X% vs last week] | [impact on Spearforge Europe exports]
+RATE: GBP | [rate] | [+/-X% vs last week] | [impact on Spearforge UK exports]
+RATE: SAR | [rate] | [+/-X% vs last week] | [impact on Spearforge Saudi exports]
 
 ==============================================================
 SECTION 1 - TOP INDIAN PROJECTS
 ==============================================================
-Find 8 major Indian projects from the past 10 days. Search for:
-- NTPC projects (coal, solar, BESS, transmission) -- especially 1200MW and any new awards
-- BESS / Battery Energy Storage tenders and awards
-- Solar EPC project awards and tenders (SECI, NTPC, state DISCOMs)
-- Metro rail projects (all cities -- Chennai, Bangalore, Mumbai, Delhi, Hyderabad, Pune, Kochi)
-- Data centre construction announcements
-- Industrial plant / factory / warehouse construction
-- Airport MEP packages
-- Retail / hypermarket / supermarket chain expansions (relevant for Supermarket Racks)
-- Automotive / manufacturing plant expansions (relevant for Die Storage Racks)
-- Any major EPC contract awards -- name the winner
+Find 6 major Indian projects from past 10 days. Search for:
+NTPC projects and awards, BESS tenders and awards, Solar EPC (SECI/NTPC/DISCOMs),
+Metro rail (all cities), Data centres, Airport MEP, Retail/supermarket expansions,
+Automotive/manufacturing plant expansions, any major EPC contract awards.
 
 For each use EXACTLY this format:
 PROJECT: [Title]
 VALUE: [Rs.X,XXX Cr] ([original currency])
-CLIENT: [Owner/Client name] | LOCATION: [City, State] | STATUS: [Tendered/Awarded/Announced]
-WINNER: [Company name -- EPC Contractor / Manufacturer / Developer] (if Awarded, else N/A)
+CLIENT: [Name] | LOCATION: [City, State] | STATUS: [Tendered/Awarded/Announced]
+WINNER: [Company -- EPC/Manufacturer] (if Awarded, else N/A)
 PRODUCTS: [Specific Spearforge products that apply]
 OPPORTUNITY: [One line on what Spearforge should do]
-SOURCE: [Publication or website name only -- no URL]
+SOURCE: [Publication name only]
 ---
 
 ==============================================================
 SECTION 2 - TOP GLOBAL PROJECTS
 ==============================================================
-Find 5 major global projects from past 10 days -- Middle East, Europe, or US.
-Priority: BESS, Solar EPC, Data centres, Industrial plants, Metro/Rail, Retail expansion.
+Find 4 global projects (Middle East, Europe, US) from past 10 days.
+Priority: BESS, Solar EPC, Data centres, Industrial plants, Metro/Rail, Retail.
 
 For each use EXACTLY this format:
 PROJECT: [Title]
 VALUE: [Rs.X,XXX Cr] ([original currency])
-COUNTRY: [Country] | LOCATION: [City/Region] | STATUS: [status] | CLIENT: [Name]
-WINNER: [Company name -- EPC / Manufacturer] (if Awarded, else N/A)
+COUNTRY: [Country] | LOCATION: [City] | STATUS: [status] | CLIENT: [Name]
+WINNER: [Company -- EPC/Manufacturer] (if Awarded, else N/A)
 PRODUCTS: [Specific Spearforge products that apply]
-OPPORTUNITY: [One line export angle and entry strategy]
-SOURCE: [Publication or website name only -- no URL]
+OPPORTUNITY: [One line export angle]
+SOURCE: [Publication name only]
 ---
+
+==============================================================
+STRATEGIC ACTION
+==============================================================
+ACTION: [One critical thing Spearforge should do this week]
+"""
+
+
+def get_prompt_part2():
+    """Raw material prices only"""
+    today = datetime.now().strftime("%d %B %Y")
+    return f"""You are the raw material price analyst for Spearforge Industrial and Engineering Solutions,
+a sheet metal manufacturer in Chennai, India.
+
+Today is {today}.
+
+Search for current Chennai / South India steel prices from SteelMint, Steel360,
+IndiaMart, TradeIndia, Economic Times Commodities, Business Standard commodities,
+or any Indian steel trader website.
+Search: "MS HR sheet price Chennai 2026", "GI sheet price India May 2026",
+"SS 304 price India 2026", "aluminium extrusion price India 2026".
+
+YOU MUST include ALL 9 materials. Do not skip any.
+If exact Chennai price is not found, use closest South India or national market price.
+
+CRITICAL RULES:
+- Do NOT add any introduction or summary text.
+- Start your response DIRECTLY with SECTION 3. Nothing before it.
+- SOURCE field: website/publication name only. No URLs.
 
 ==============================================================
 SECTION 3 - RAW MATERIAL PRICES (Chennai market this week)
 ==============================================================
-Search for current Chennai / South India steel prices from SteelMint, Steel360,
-IndiaMart, TradeIndia, Economic Times Commodities, or any Indian steel trader website.
-Search: "MS HR sheet price Chennai 2026", "GI sheet price India May 2026", "SS 304 price India 2026".
-
-YOU MUST include ALL 9 materials below. Do not skip any material.
-If exact Chennai price not found, use closest South India or national price available.
-
 For each material use EXACTLY this one-line format:
-MATERIAL: [name] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [website name only]
+MATERIAL: [name] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [name only]
 
-Materials to cover (ALL 9 are mandatory):
+ALL 9 materials are mandatory:
 1. MS HR Sheet 2mm
 2. MS HR Sheet 3mm
 3. MS CR Sheet 1.2mm
@@ -139,93 +154,17 @@ Materials to cover (ALL 9 are mandatory):
 8. SS 304 Sheet 1.6mm
 9. Aluminium 6063-T5 Extrusion
 
-USD/INR IMPACT: [One line on how current rate affects Spearforge import-linked costs]
-
-==============================================================
-STRATEGIC ACTION
-==============================================================
-ACTION: [One critical thing Spearforge should do this week based on all the above intelligence]
-
-==============================================================
-SECTION 1 - TOP INDIAN PROJECTS
-==============================================================
-Find 8 major Indian projects from the past 10 days. Cast a wide net -- search for:
-- NTPC projects (coal, solar, BESS, transmission) -- especially the 1200 MW and any new awards
-- BESS / Battery Energy Storage tenders and awards
-- Solar EPC project awards and tenders (SECI, NTPC, state DISCOMs)
-- Metro rail projects (all cities -- Chennai, Bangalore, Mumbai, Delhi, Hyderabad, Pune, Kochi)
-- Data centre construction announcements
-- Industrial plant / factory construction
-- Airport MEP packages
-- Retail / hypermarket / supermarket chain expansions (relevant for Supermarket Racks)
-- Automotive plant expansions or new factories (relevant for Die Storage Racks)
-- Any major EPC contract awards -- name the winner and whether EPC or manufacturer
-
-For each use EXACTLY this format:
-PROJECT: [Title]
-VALUE: [Rs.X,XXX Cr] ([original currency])
-CLIENT: [Owner/Client name] | LOCATION: [City, State] | STATUS: [Tendered/Awarded/Announced]
-WINNER: [Company name -- EPC Contractor / Manufacturer / Developer] (only if Awarded, else write N/A)
-PRODUCTS: [Specific Spearforge products that apply from catalogue above]
-OPPORTUNITY: [One line -- what Spearforge should do and who to contact]
-SOURCE: [Publication name] -- [https://full-url]
----
-
-==============================================================
-SECTION 2 - TOP GLOBAL PROJECTS
-==============================================================
-Find 5 major global projects from past 10 days -- Middle East, Europe, or US.
-Priority: BESS, Solar EPC, Data centres, Industrial plants, Metro/Rail, Retail expansion.
-For awarded projects, name who won and their type (EPC/manufacturer).
-
-For each use EXACTLY this format:
-PROJECT: [Title]
-VALUE: [Rs.X,XXX Cr] ([original currency])
-COUNTRY: [Country] | LOCATION: [City/Region] | STATUS: [status] | CLIENT: [Name]
-WINNER: [Company name -- EPC / Manufacturer] (if Awarded, else N/A)
-PRODUCTS: [Specific Spearforge products that apply]
-OPPORTUNITY: [One line export angle and entry strategy]
-SOURCE: [Publication name] -- [https://full-url]
----
-
-==============================================================
-SECTION 3 - RAW MATERIAL PRICES (Chennai market this week)
-==============================================================
-Search for current Chennai / South India steel prices from ANY of these sources:
-SteelMint (steelmint.com), Steel360 (steel360.com), IndiaMart steel listings,
-TradeIndia steel prices, Economic Times Commodities, Business Standard commodities,
-or any Indian steel trader website. Search "MS HR sheet price Chennai 2026" and
-"GI sheet price India May 2026" and "SS 304 sheet price India 2026".
-
-For each material use EXACTLY this one-line format:
-MATERIAL: [name and spec] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [https://url]
-
-Cover these materials:
-MS HR Sheet 2mm, MS HR Sheet 3mm, MS CR Sheet 1.2mm, MS CR Sheet 1.6mm,
-GI Sheet 1.2mm, GI Sheet 1.6mm, SS 304 Sheet 1.2mm, SS 304 Sheet 1.6mm, Aluminium 6063-T5
-
-USD/INR IMPACT: [One line on how current rate affects Spearforge import-linked costs]
-
-==============================================================
-STRATEGIC ACTION
-==============================================================
-ACTION: [One critical thing Spearforge should do this week based on all the above intelligence]
+USD/INR IMPACT: [One line on how current USD/INR rate affects Spearforge import costs]
 """
 
 
 # ================================================================
 # STEP 3 -- CALL GEMINI WITH GOOGLE SEARCH GROUNDING
+# Two separate calls so neither gets truncated
 # ================================================================
-def generate_report():
-    model_name = find_best_model()
-    model_id   = model_name.replace("models/", "")
-    api_key    = os.environ["GEMINI_API_KEY"]
-    url        = (f"https://generativelanguage.googleapis.com/v1beta"
-                  f"/models/{model_id}:generateContent?key={api_key}")
-
-    prompt = get_prompt()
-    print(f"  Calling Gemini REST API ({model_id}) with Google Search grounding...")
-
+def call_gemini(api_key, model_id, prompt):
+    url = (f"https://generativelanguage.googleapis.com/v1beta"
+           f"/models/{model_id}:generateContent?key={api_key}")
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "tools":    [{"google_search": {}}],
@@ -234,16 +173,29 @@ def generate_report():
             "maxOutputTokens": 8192
         }
     }
-
     resp = requests.post(url, json=payload, timeout=120)
-
     if resp.status_code != 200:
         raise ValueError(f"Gemini API error {resp.status_code}: {resp.text[:400]}")
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 
-    data     = resp.json()
-    raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-    print(f"  Gemini responded ({len(raw_text)} chars)")
-    return raw_text
+
+def generate_report():
+    model_name = find_best_model()
+    model_id   = model_name.replace("models/", "")
+    api_key    = os.environ["GEMINI_API_KEY"]
+
+    print(f"  Using model: {model_id}")
+
+    print("  Call 1: Exchange rates + Projects...")
+    part1 = call_gemini(api_key, model_id, get_prompt_part1())
+    print(f"  Part 1: {len(part1)} chars")
+
+    print("  Call 2: Raw material prices...")
+    part2 = call_gemini(api_key, model_id, get_prompt_part2())
+    print(f"  Part 2: {len(part2)} chars")
+
+    return part1 + "\n" + part2
 
 
 # ================================================================
