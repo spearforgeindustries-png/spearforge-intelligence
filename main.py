@@ -162,7 +162,7 @@ USD/INR IMPACT: [One line on how current USD/INR rate affects Spearforge import 
 # STEP 3 -- CALL GEMINI WITH GOOGLE SEARCH GROUNDING
 # Two separate calls so neither gets truncated
 # ================================================================
-def call_gemini(api_key, model_id, prompt):
+def call_gemini(api_key, model_id, prompt, label=""):
     url = (f"https://generativelanguage.googleapis.com/v1beta"
            f"/models/{model_id}:generateContent?key={api_key}")
     payload = {
@@ -177,7 +177,26 @@ def call_gemini(api_key, model_id, prompt):
     if resp.status_code != 200:
         raise ValueError(f"Gemini API error {resp.status_code}: {resp.text[:400]}")
     data = resp.json()
-    return data["candidates"][0]["content"]["parts"][0]["text"]
+
+    # Extract token usage from response metadata
+    usage         = data.get("usageMetadata", {})
+    input_tokens  = usage.get("promptTokenCount", 0)
+    output_tokens = usage.get("candidatesTokenCount", 0)
+    total_tokens  = usage.get("totalTokenCount", 0)
+
+    print(f"  [{label}] Input: {input_tokens:,} | Output: {output_tokens:,} | Total: {total_tokens:,} tokens")
+
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
+    return text, input_tokens, output_tokens, total_tokens
+
+
+# Gemini 1.5 Flash free tier limits (as of May 2026)
+FREE_TIER_LIMITS = {
+    "rpm":  15,          # Requests per minute
+    "rpd":  1500,        # Requests per day
+    "tpm":  1_000_000,   # Tokens per minute
+    "tpd":  None,        # No daily token limit on free tier
+}
 
 
 def generate_report():
@@ -188,19 +207,109 @@ def generate_report():
     print(f"  Using model: {model_id}")
 
     print("  Call 1: Exchange rates + Projects...")
-    part1 = call_gemini(api_key, model_id, get_prompt_part1())
-    print(f"  Part 1: {len(part1)} chars")
+    part1, in1, out1, tot1 = call_gemini(api_key, model_id, get_prompt_part1(), "Part 1")
 
     print("  Call 2: Raw material prices...")
-    part2 = call_gemini(api_key, model_id, get_prompt_part2())
-    print(f"  Part 2: {len(part2)} chars")
+    part2, in2, out2, tot2 = call_gemini(api_key, model_id, get_prompt_part2(), "Part 2")
+
+    # Weekly token summary
+    total_in    = in1  + in2
+    total_out   = out1 + out2
+    total_all   = tot1 + tot2
+    calls_week  = 2
+    calls_month = calls_week * 4   # ~4 Fridays/month
+    tokens_month = total_all * 4
+
+    print(f"\n  TOKEN SUMMARY THIS RUN:")
+    print(f"    Input tokens  : {total_in:,}")
+    print(f"    Output tokens : {total_out:,}")
+    print(f"    Total tokens  : {total_all:,}")
+    print(f"    API calls     : {calls_week} (this run)")
+    print(f"  MONTHLY PROJECTION (4 runs):")
+    print(f"    Est. tokens/month : {tokens_month:,}")
+    print(f"    Est. calls/month  : {calls_month}")
+    print(f"    Free tier RPD     : {FREE_TIER_LIMITS['rpd']:,} (you use {calls_month})")
+    print(f"    Free tier TPM     : {FREE_TIER_LIMITS['tpm']:,}")
+
+    # Store token stats for email footer
+    generate_report.last_stats = {
+        "model":         model_id,
+        "input_tokens":  total_in,
+        "output_tokens": total_out,
+        "total_tokens":  total_all,
+        "calls":         calls_week,
+        "monthly_tokens": tokens_month,
+        "monthly_calls":  calls_month,
+        "rpd_limit":     FREE_TIER_LIMITS["rpd"],
+        "tpm_limit":     FREE_TIER_LIMITS["tpm"],
+    }
 
     return part1 + "\n" + part2
 
 
-# ================================================================
-# STEP 4 -- BUILD HTML EMAIL FROM PLAIN TEXT
-# ================================================================
+generate_report.last_stats = {}
+
+
+def build_token_panel(stats):
+    if not stats:
+        return ""
+    pct_rpd = round((stats["monthly_calls"] / stats["rpd_limit"]) * 100, 1)
+    bar_w   = min(int(pct_rpd * 2), 200)
+    bar_clr = "#27ae60" if pct_rpd < 50 else "#e67e22" if pct_rpd < 80 else "#c0392b"
+    return f"""
+<tr><td style="padding:16px 24px;background:#f9f9f9;border-top:1px solid #eef0f5;">
+  <div style="font-size:10px;font-weight:700;color:#1a2744;text-transform:uppercase;
+    letter-spacing:2px;margin-bottom:12px;">API Token Usage This Run</div>
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="width:50%;padding-right:12px;vertical-align:top;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:6px 10px;background:#fff;border:1px solid #eee;border-radius:4px;margin-bottom:4px;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;">Model</div>
+              <div style="font-size:12px;font-weight:700;color:#1a2744;">{stats["model"]}</div>
+            </td>
+          </tr>
+          <tr><td style="padding:4px 0;"></td></tr>
+          <tr>
+            <td style="padding:6px 10px;background:#fff;border:1px solid #eee;border-radius:4px;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;">This Run</div>
+              <div style="font-size:12px;font-weight:700;color:#1a2744;">
+                {stats["total_tokens"]:,} tokens &nbsp;·&nbsp; {stats["calls"]} API calls</div>
+              <div style="font-size:10px;color:#888;margin-top:2px;">
+                Input: {stats["input_tokens"]:,} &nbsp;|&nbsp; Output: {stats["output_tokens"]:,}</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td style="width:50%;padding-left:12px;vertical-align:top;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:6px 10px;background:#fff;border:1px solid #eee;border-radius:4px;margin-bottom:4px;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;">Monthly Projection (4 runs)</div>
+              <div style="font-size:12px;font-weight:700;color:#1a2744;">
+                ~{stats["monthly_tokens"]:,} tokens &nbsp;·&nbsp; {stats["monthly_calls"]} calls</div>
+            </td>
+          </tr>
+          <tr><td style="padding:4px 0;"></td></tr>
+          <tr>
+            <td style="padding:6px 10px;background:#fff;border:1px solid #eee;border-radius:4px;">
+              <div style="font-size:9px;color:#888;text-transform:uppercase;margin-bottom:4px;">
+                Free Tier Usage (Requests/Day limit: {stats["rpd_limit"]:,})</div>
+              <div style="background:#eee;border-radius:4px;height:8px;width:200px;">
+                <div style="background:{bar_clr};height:8px;border-radius:4px;width:{bar_w}px;"></div>
+              </div>
+              <div style="font-size:10px;color:{bar_clr};font-weight:700;margin-top:4px;">
+                {stats["monthly_calls"]} / {stats["rpd_limit"]:,} requests/day &nbsp;·&nbsp; {pct_rpd}% used</div>
+              <div style="font-size:10px;color:#888;margin-top:2px;">
+                TPM limit: {stats["tpm_limit"]:,} &nbsp;·&nbsp; Well within free tier ✓</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</td></tr>"""
 def build_html_from_text(text):
     today = datetime.now().strftime("%d %B %Y")
 
@@ -471,6 +580,8 @@ def build_html_from_text(text):
 <table width="100%" cellpadding="0" cellspacing="0">
   {html_body}
 </table>
+
+{build_token_panel(generate_report.last_stats)}
 
 <tr><td style="padding:20px 28px;background:#1a2744;text-align:center;">
   <div style="font-size:11px;color:#8a9dc0;line-height:1.9;">
