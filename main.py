@@ -215,12 +215,13 @@ def fetch_exchange_rates():
 
     # ---- Source 2: Frankfurter (ECB) -- cross-verify USD, EUR, GBP ----
     try:
+        # Use stable v1 endpoint — v2 format differs for non-ECB base currencies
         resp2 = requests.get(
-            "https://api.frankfurter.dev/v2/rates?base=INR&quotes=USD,EUR,GBP",
+            "https://api.frankfurter.app/latest?from=INR&to=USD,EUR,GBP",
             timeout=10
         )
         data2 = resp2.json()
-        raw2  = data2.get("rates", {})
+        raw2  = data2.get("rates", {}) if isinstance(data2, dict) else {}
         for curr in ["USD", "EUR", "GBP"]:
             if curr in raw2 and raw2[curr] != 0:
                 rate2 = round(1 / raw2[curr], 4)
@@ -251,6 +252,7 @@ def fetch_exchange_rates():
 # Two separate calls so neither gets truncated
 # ================================================================
 def call_gemini(api_key, model_id, prompt, label=""):
+    import time
     url = (f"https://generativelanguage.googleapis.com/v1beta"
            f"/models/{model_id}:generateContent?key={api_key}")
     payload = {
@@ -261,20 +263,30 @@ def call_gemini(api_key, model_id, prompt, label=""):
             "maxOutputTokens": 8192
         }
     }
-    resp = requests.post(url, json=payload, timeout=120)
-    if resp.status_code != 200:
-        raise ValueError(f"Gemini API error {resp.status_code}: {resp.text[:400]}")
-    data = resp.json()
 
-    usage         = data.get("usageMetadata", {})
-    input_tokens  = usage.get("promptTokenCount", 0)
-    output_tokens = usage.get("candidatesTokenCount", 0)
-    total_tokens  = usage.get("totalTokenCount", 0)
+    # Retry up to 3 times on 429 rate limit errors
+    for attempt in range(3):
+        resp = requests.post(url, json=payload, timeout=120)
 
-    print(f"  [{label}] Input: {input_tokens:,} | Output: {output_tokens:,} | Total: {total_tokens:,} tokens")
+        if resp.status_code == 429:
+            wait = 65 * (attempt + 1)  # 65s, 130s, 195s
+            print(f"  [{label}] Rate limit hit (429). Waiting {wait}s before retry {attempt+1}/3...")
+            time.sleep(wait)
+            continue
 
-    text = data["candidates"][0]["content"]["parts"][0]["text"]
-    return text, input_tokens, output_tokens, total_tokens
+        if resp.status_code != 200:
+            raise ValueError(f"Gemini API error {resp.status_code}: {resp.text[:400]}")
+
+        data = resp.json()
+        usage         = data.get("usageMetadata", {})
+        input_tokens  = usage.get("promptTokenCount", 0)
+        output_tokens = usage.get("candidatesTokenCount", 0)
+        total_tokens  = usage.get("totalTokenCount", 0)
+        print(f"  [{label}] Input: {input_tokens:,} | Output: {output_tokens:,} | Total: {total_tokens:,} tokens")
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+        return text, input_tokens, output_tokens, total_tokens
+
+    raise ValueError(f"[{label}] Gemini API still rate-limited after 3 retries. Try again in a few minutes.")
 
 
 FREE_TIER_LIMITS = {
@@ -297,6 +309,10 @@ def generate_report():
     print("  Call 1: Projects (searching 5 trusted sources)...")
     part1, in1, out1, tot1 = call_gemini(
         api_key, model_id, get_prompt_part1(), "Projects")
+
+    print("  Waiting 10s before second API call...")
+    import time
+    time.sleep(10)
 
     print("  Call 2: Raw material prices (SteelMint / Steel360)...")
     part2, in2, out2, tot2 = call_gemini(
