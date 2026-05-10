@@ -82,7 +82,12 @@ SOURCE: [Publication] -- [https://full-url]
 ==============================================================
 SECTION 3 - RAW MATERIAL PRICES (Chennai market this week)
 ==============================================================
-Search SteelMint (steelmint.com) and Steel360 (steel360.com) for current Chennai prices.
+Search for current Chennai / South India steel prices from ANY of these sources:
+SteelMint (steelmint.com), Steel360 (steel360.com), IndiaMart steel price listings,
+TradeIndia steel prices, Economic Times Commodities, Business Standard commodities,
+or any Indian steel trader website showing current 2026 prices.
+Search "MS HR sheet price Chennai 2026" and "GI sheet price India May 2026"
+and "SS 304 sheet price India 2026". Accept any credible source with actual INR prices.
 
 For each material use EXACTLY this one-line format:
 MATERIAL: [name and spec] | TONNE: [Rs.XX,XXX] | KG: [Rs.XX.XX] | CHANGE: [Rising/Falling/Stable X%] | SOURCE: [https://url]
