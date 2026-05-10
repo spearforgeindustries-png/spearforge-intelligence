@@ -54,14 +54,18 @@ Export markets: US, Europe, Middle East, UK.
 Today is {today}. Show project values as Rs.X,XXX Cr (original currency in brackets).
 
 CRITICAL RULES:
-- Use Google Search. Real verified data from the past 10 days only.
-- No fabrication. Skip any item without a real source.
+- Use Google Search actively. Search multiple queries to find projects.
+- Include real projects you find — do not return N/A or placeholder entries.
+- If you cannot find 6 Indian projects, include however many you find — even 2 or 3 is fine.
+- If a source name is not clear, write "Industry News" — do not write N/A.
 - Keep each field to ONE LINE maximum.
-- For AWARDED projects, always name who won and whether EPC or manufacturer.
-- Never miss major NTPC, SECI, Indian Railways, Metro, Data Centre, BESS project news.
-- Do NOT add any introduction, title, date header, or summary text.
+- For AWARDED projects, name who won and whether EPC or manufacturer.
+- Search specifically for: NTPC awards, BESS India, Solar tenders SECI, Metro rail India,
+  Data centre India 2026, Retail expansion India, Automotive plant India.
+- If project value is not publicly available, write "Value not disclosed" -- still include the project.
+- Do NOT return N/A entries. If genuinely nothing found for a section, write one line:
+  NOTE: No major projects found this week for this category.
 - Start your response DIRECTLY with SECTION 0. Nothing before it.
-- For SOURCE: use publication/website name only. No URLs.
 
 ==============================================================
 SECTION 0 - EXCHANGE RATES
@@ -420,8 +424,17 @@ def build_html_from_text(text):
             continue
 
         # PROJECT — also catches "Project Name:" or bare project titles in Section 1/2
+        # Skip N/A placeholder entries Gemini returns when it finds nothing
         if line.startswith("PROJECT:") or line.startswith("Project Name:"):
             content = re.split(r':\s*', line, 1)[1].strip() if ':' in line else line
+            if (content.strip().upper() == "N/A"
+                    or "no major" in content.lower()
+                    or "no additional" in content.lower()
+                    or "not found" in content.lower()
+                    or "no projects" in content.lower()):
+                # Skip this entire project block by flagging it
+                current_color = current_color  # keep color unchanged
+                continue
             html_body += f"""<tr><td style="padding:14px 24px 2px;">
   <div style="font-size:15px;font-weight:700;color:#1a2744;">{content}</div></td></tr>"""
             continue
@@ -429,6 +442,8 @@ def build_html_from_text(text):
         # VALUE
         if line.startswith("VALUE:"):
             content = line.replace("VALUE:", "").strip()
+            if not content or content.upper() == "N/A":
+                content = "Value not disclosed"
             html_body += f"""<tr><td style="padding:2px 24px 4px;">
   <div style="font-size:18px;font-weight:800;color:{current_color};">{content}</div></td></tr>"""
             continue
