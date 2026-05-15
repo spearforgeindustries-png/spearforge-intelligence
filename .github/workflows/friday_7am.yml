@@ -1,23 +1,36 @@
-name: Spearforge Weekly Newsletter
+name: Spearforge Weekly Intelligence Suite
+
 on:
   schedule:
-    - cron: '30 1 * * 5' # 7:00 AM IST is 1:30 AM UTC
-  workflow_dispatch: # Allows you to run it manually to test
+    # ── TEST RUN: Friday 15 May 2026, 3:00 PM IST (09:30 UTC) ──
+    - cron: '30 9 15 5 *'
+
+    # ── PRODUCTION: Every Friday 7:00 AM IST (01:30 UTC) ──
+    - cron: '30 1 * * 5'
+
+  workflow_dispatch:  # Keep manual trigger for emergencies
 
 jobs:
-  build:
+  intel-report:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Run Newsletter Script
+
+      - name: Run Intel Report
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
+          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SHEETS_CREDS: ${{ secrets.GOOGLE_SHEETS_CREDS }}
+          GOOGLE_SHEET_ID:     ${{ secrets.GOOGLE_SHEET_ID }}
         run: python main.py
