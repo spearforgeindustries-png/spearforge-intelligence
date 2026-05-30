@@ -31,14 +31,25 @@ TARGETING STRATEGY -- use in all project analysis:
 
 # ================================================================
 # GEMINI SETUP -- model priority list avoids deprecated names
+# Dead as of June 2026: gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro
 # ================================================================
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
+DEAD_MODELS = {
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-2.0-flash-001",
+    "gemini-2.0-flash-lite-001",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-001",
+    "gemini-1.5-pro",
+    "gemini-1.5-pro-001",
+}
 
 def find_best_model():
     PREFERRED = [
         "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
+        "gemini-2.5-flash-lite",
     ]
     try:
         available = {
@@ -50,14 +61,16 @@ def find_best_model():
             if candidate in available:
                 print(f"  Using model: {candidate}")
                 return f"models/{candidate}"
-        for name in available:
-            if "flash" in name and "latest" not in name:
+        # Scan available for any live flash model
+        for name in sorted(available):
+            if "flash" in name and "latest" not in name and name not in DEAD_MODELS:
                 print(f"  Fallback model: {name}")
                 return f"models/{name}"
     except Exception as e:
         print(f"  Could not list models: {e}")
-    print("  Hard fallback: gemini-2.0-flash")
-    return "models/gemini-2.0-flash"
+    # Hard fallback -- always a live model
+    print("  Hard fallback: gemini-2.5-flash")
+    return "models/gemini-2.5-flash"
 
 
 # ================================================================
@@ -206,7 +219,6 @@ FX_CURRENCIES = {
 
 def fetch_exchange_rates():
     results = {}
-    # Source 1: Open Exchange Rates (covers all 5 including AED/SAR)
     try:
         resp = requests.get("https://open.er-api.com/v6/latest/INR", timeout=10)
         data = resp.json()
@@ -223,7 +235,6 @@ def fetch_exchange_rates():
     except Exception as e:
         print(f"  FX Source 1 failed: {e}")
 
-    # Source 2: Frankfurter/ECB -- cross-verify USD, EUR, GBP
     try:
         resp2 = requests.get(
             "https://api.frankfurter.app/latest?from=INR&to=USD,EUR,GBP", timeout=10)
@@ -272,7 +283,6 @@ def call_gemini(api_key, model_id, prompt, label=""):
         total_tokens  = usage.get("totalTokenCount", 0)
         print(f"  [{label}] {input_tokens:,} in | {output_tokens:,} out | {total_tokens:,} total")
 
-        # Safety guard -- Gemini occasionally returns empty candidates on safety blocks
         candidates = data.get("candidates", [])
         if not candidates:
             raise ValueError(
@@ -291,7 +301,6 @@ def call_gemini(api_key, model_id, prompt, label=""):
 
 # ================================================================
 # CLAUDE API CALL -- analysis and strategic writing
-# Gracefully skipped if ANTHROPIC_API_KEY not set
 # ================================================================
 def call_claude(prompt, label=""):
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -304,7 +313,7 @@ def call_claude(prompt, label=""):
         "content-type":      "application/json",
     }
     payload = {
-        "model":      "claude-sonnet-4-20250514",
+        "model":      "claude-sonnet-4-6",
         "max_tokens": 4000,
         "messages":   [{"role": "user", "content": prompt}]
     }
@@ -346,7 +355,6 @@ def generate_report():
     print("  [Gemini] Call 1: Projects across 5 trusted sources...")
     part1, in1, out1, tot1 = call_gemini(api_key, model_id, get_prompt_part1(), "Projects")
 
-    # Claude analysis pass -- enhances OPPORTUNITY fields with tier strategy
     claude_enhanced = part1
     if os.environ.get("ANTHROPIC_API_KEY"):
         print("  [Claude] Analysing projects for tier targeting...")
@@ -512,7 +520,6 @@ def build_html_from_text(text, fx_data=None):
         if not line:
             continue
 
-        # Pre-processing: strip Gemini formatting noise
         line = re.sub(r'^\d+\.\s+', '', line)
         line = re.sub(r'^\*\*(.+)\*\*$', r'\1', line)
         line = re.sub(r'^\*\*', '', line)
@@ -522,11 +529,9 @@ def build_html_from_text(text, fx_data=None):
                 line.startswith(k) for k in ["CLIENT:", "COUNTRY:", "RAILWAY UNIT:"]):
             line = "CLIENT: " + line
 
-        # Skip separator lines
         if re.match(r'^[=\-]{4,}$', line):
             continue
 
-        # Section headers
         matched = False
         for key, cfg in SECTIONS.items():
             if key in line.upper():
@@ -541,14 +546,12 @@ def build_html_from_text(text, fx_data=None):
         if matched:
             continue
 
-        # Skip junk intro lines Gemini adds
         if any(x in line for x in [
             "Weekly Intelligence Report", "Spearforge Industrial",
             "Date:", "*Date", "*USD", "USD/INR:"
         ]):
             continue
 
-        # Strategic Action header
         if "STRATEGIC ACTION" in line.upper():
             in_strategic  = True
             current_color = "#c9a227"
@@ -564,13 +567,11 @@ def build_html_from_text(text, fx_data=None):
             in_strategic = False
             continue
 
-        # Divider
         if line == "---":
             html_body += """<tr><td style="padding:0 24px;">
   <hr style="border:none;border-top:1px solid #eef0f5;margin:4px 0;"></td></tr>"""
             continue
 
-        # PROJECT
         if line.startswith("PROJECT:") or line.startswith("Project Name:"):
             content = re.split(r':\s*', line, 1)[1].strip() if ':' in line else line
             skip_words = ["n/a", "no major", "no additional", "not found", "no projects",
@@ -581,7 +582,6 @@ def build_html_from_text(text, fx_data=None):
   <div style="font-size:15px;font-weight:700;color:#1a2744;">{content}</div></td></tr>"""
             continue
 
-        # VALUE
         if line.startswith("VALUE:"):
             content = line.replace("VALUE:", "").strip()
             if not content or content.upper() == "N/A":
@@ -590,13 +590,11 @@ def build_html_from_text(text, fx_data=None):
   <div style="font-size:18px;font-weight:800;color:{current_color};">{content}</div></td></tr>"""
             continue
 
-        # CLIENT / COUNTRY / RAILWAY UNIT
         if any(line.startswith(k) for k in ["CLIENT:", "COUNTRY:", "RAILWAY UNIT:"]):
             html_body += f"""<tr><td style="padding:2px 24px;">
   <div style="font-size:12px;color:#666;">{line}</div></td></tr>"""
             continue
 
-        # WINNER
         if line.startswith("WINNER:"):
             content = line.replace("WINNER:", "").strip()
             if content and content != "N/A":
@@ -606,7 +604,6 @@ def build_html_from_text(text, fx_data=None):
     <strong style="color:#c0392b;">Contract Winner:</strong> {content}</div></td></tr>"""
             continue
 
-        # PRODUCTS
         if line.startswith("PRODUCTS:"):
             content = line.replace("PRODUCTS:", "").strip()
             html_body += f"""<tr><td style="padding:6px 24px 2px;">
@@ -615,7 +612,6 @@ def build_html_from_text(text, fx_data=None):
     <strong style="color:{current_color};">Spearforge Products:</strong> {content}</div></td></tr>"""
             continue
 
-        # OPPORTUNITY
         if line.startswith("OPPORTUNITY:"):
             content = line.replace("OPPORTUNITY:", "").strip()
             html_body += f"""<tr><td style="padding:2px 24px 8px;">
@@ -624,7 +620,6 @@ def build_html_from_text(text, fx_data=None):
     <strong style="color:#c9a227;">Opportunity:</strong> {content}</div></td></tr>"""
             continue
 
-        # VERIFIED_BY -- confidence badge
         if line.startswith("VERIFIED_BY:"):
             parts      = line.replace("VERIFIED_BY:", "").split("|")
             sources    = parts[0].strip() if parts else ""
@@ -640,7 +635,6 @@ def build_html_from_text(text, fx_data=None):
   </div></td></tr>"""
             continue
 
-        # SOURCE -- plain text only, no link
         if line.startswith("SOURCE:") or line.startswith("URL:"):
             content = line.replace("SOURCE:", "").replace("URL:", "").strip()
             content = re.sub(r'https?://\S+', '', content).strip()
@@ -649,7 +643,6 @@ def build_html_from_text(text, fx_data=None):
   <div style="font-size:11px;color:#888;">📰 Source: {content}</div></td></tr>"""
             continue
 
-        # MATERIAL rows -- plain text source, no hyperlink
         if line.startswith("MATERIAL:"):
             parts    = [p.strip() for p in line.split("|")]
             mat_name = parts[0].replace("MATERIAL:", "").strip()
@@ -657,7 +650,6 @@ def build_html_from_text(text, fx_data=None):
             kg       = next((p.replace("KG:", "").strip() for p in parts if "KG:" in p), "--")
             change   = next((p.replace("CHANGE:", "").strip() for p in parts if "CHANGE:" in p), "--")
             src_name = next((p.replace("SOURCE:", "").strip() for p in parts if "SOURCE:" in p), "")
-            # Strip any URLs from source name
             src_name = re.sub(r'https?://\S+', '', src_name).strip()
             clr      = "#c0392b" if "Rising" in change else ("#27ae60" if "Falling" in change else "#546e7a")
             html_body += f"""<tr class="mat-row">
@@ -669,7 +661,6 @@ def build_html_from_text(text, fx_data=None):
 </tr>"""
             continue
 
-        # USD/INR IMPACT
         if line.startswith("USD/INR IMPACT:"):
             content = line.replace("USD/INR IMPACT:", "").strip()
             html_body += f"""</table></td></tr>
@@ -677,12 +668,10 @@ def build_html_from_text(text, fx_data=None):
   <div style="font-size:12px;color:#555;"><strong>USD/INR Impact:</strong> {content}</div></td></tr>"""
             continue
 
-        # Everything else
         if len(line) > 3 and not line.startswith("=="):
             html_body += f"""<tr><td style="padding:2px 24px;">
   <div style="font-size:12px;color:#777;">{line}</div></td></tr>"""
 
-    # Inject material table header before first mat-row
     mat_header = """<tr><td style="padding:0;">
 <table width="100%" cellpadding="0" cellspacing="0">
 <tr style="background:#1a2744;">
@@ -692,11 +681,9 @@ def build_html_from_text(text, fx_data=None):
   <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Week Change</th>
   <th style="padding:10px 14px;text-align:left;font-size:9px;color:#c9a227;font-weight:700;text-transform:uppercase;">Source</th>
 </tr>"""
-    # Reliable injection: find first mat-row, inject header before it
     first_mat = html_body.find('<tr class="mat-row">')
     if first_mat != -1:
         html_body = html_body[:first_mat] + mat_header + html_body[first_mat:]
-        # The USD/INR IMPACT handler already closes the inner table, so no rfind needed
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -711,7 +698,7 @@ def build_html_from_text(text, fx_data=None):
   <div style="color:#c9a227;font-size:10px;font-weight:700;letter-spacing:3px;
     text-transform:uppercase;margin-bottom:8px;">Spearforge Industrial &amp; Engineering Solutions</div>
   <div style="color:#fff;font-size:24px;font-weight:800;margin-bottom:6px;">Weekly Intelligence Report</div>
-  <div style="color:#8a9dc0;font-size:13px;">{today} &nbsp;&middot;&nbsp; Auto-generated every Friday 7:00 AM IST</div>
+  <div style="color:#8a9dc0;font-size:13px;">{today} &nbsp;&middot;&nbsp; Auto-generated every Friday 3:00 PM IST</div>
 </td></tr>
 
 <tr><td>
@@ -725,7 +712,7 @@ def build_html_from_text(text, fx_data=None):
 
 <tr><td style="padding:20px 28px;background:#1a2744;text-align:center;">
   <div style="font-size:11px;color:#8a9dc0;line-height:1.9;">
-    Auto-generated by Spearforge Intel Bot &nbsp;&middot;&nbsp; Every Friday 7:00 AM IST<br>
+    Auto-generated by Spearforge Intel Bot &nbsp;&middot;&nbsp; Every Friday 3:00 PM IST<br>
     enquiries@spearforgeindustries.com &nbsp;&middot;&nbsp; Chennai, Tamil Nadu, India<br>
     <span style="color:#c9a227;font-weight:700;">"Global Precision. Industrial Excellence."</span>
   </div>
